@@ -11,9 +11,10 @@ import sys
 import os
 import argparse
 
-# Add backend directory to path
+# Add backend directory to path and change cwd to backend
 backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend"))
 sys.path.insert(0, backend_dir)
+os.chdir(backend_dir)
 
 from app.database import SessionLocal
 from app.models.entities import User
