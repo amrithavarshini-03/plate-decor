@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="brassGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FBF6EC" />
+      <stop offset="70%" stop-color="#F3E6CE" />
+      <stop offset="95%" stop-color="#E4C580" />
+      <stop offset="100%" stop-color="#B88E3F" />
+    </radialGradient>
+    <radialGradient id="leafGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#427E51" />
+      <stop offset="75%" stop-color="#2F5D3A" />
+      <stop offset="100%" stop-color="#214229" />
+    </radialGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#2B1A2E" flood-opacity="0.18" />
+    </filter>
+  </defs>
+
+  <!-- Brass Outer Plate Rim -->
+  <circle cx="300" cy="300" r="280" fill="url(#brassGrad)" filter="url(#shadow)" stroke="#B88E3F" stroke-width="6" />
+  <circle cx="300" cy="300" r="265" fill="none" stroke="#C8A86B" stroke-width="3" stroke-dasharray="6,6" />
+
+  <!-- Fresh Banana Leaf Base -->
+  <circle cx="300" cy="300" r="250" fill="url(#leafGrad)" />
+  <line x1="300" y1="50" x2="300" y2="550" stroke="#427E51" stroke-width="3" opacity="0.6" />
+  <path d="M300 120 Q 200 160 120 180" stroke="#427E51" stroke-width="1.5" fill="none" opacity="0.4" />
+  <path d="M300 120 Q 400 160 480 180" stroke="#427E51" stroke-width="1.5" fill="none" opacity="0.4" />
+  <path d="M300 240 Q 180 280 100 300" stroke="#427E51" stroke-width="1.5" fill="none" opacity="0.4" />
+  <path d="M300 240 Q 420 280 500 300" stroke="#427E51" stroke-width="1.5" fill="none" opacity="0.4" />
+  <path d="M300 360 Q 200 400 120 440" stroke="#427E51" stroke-width="1.5" fill="none" opacity="0.4" />
+  <path d="M300 360 Q 400 400 480 440" stroke="#427E51" stroke-width="1.5" fill="none" opacity="0.4" />
+
+  <!-- Concentric Marigold Garland Ring -->
+  <g fill="#E9A62B" stroke="#D48A18" stroke-width="1.5">
+    <circle cx="300" cy="90" r="24" />
+    <circle cx="410" cy="135" r="24" />
+    <circle cx="490" cy="225" r="24" />
+    <circle cx="510" cy="340" r="24" />
+    <circle cx="455" cy="450" r="24" />
+    <circle cx="350" cy="505" r="24" />
+    <circle cx="230" cy="500" r="24" />
+    <circle cx="135" cy="435" r="24" />
+    <circle cx="90" cy="325" r="24" />
+    <circle cx="110" cy="210" r="24" />
+    <circle cx="190" cy="130" r="24" />
+  </g>
+  <!-- Secondary Inner Marigold Highlights -->
+  <g fill="#F3B94D">
+    <circle cx="300" cy="90" r="14" />
+    <circle cx="410" cy="135" r="14" />
+    <circle cx="490" cy="225" r="14" />
+    <circle cx="510" cy="340" r="14" />
+    <circle cx="455" cy="450" r="14" />
+    <circle cx="350" cy="505" r="14" />
+    <circle cx="230" cy="500" r="14" />
+    <circle cx="135" cy="435" r="14" />
+    <circle cx="90" cy="325" r="14" />
+    <circle cx="110" cy="210" r="14" />
+    <circle cx="190" cy="130" r="14" />
+  </g>
+
+  <!-- Inner Rose Blossom Ring -->
+  <g fill="#A8232F" stroke="#8A1B25" stroke-width="1">
+    <circle cx="300" cy="165" r="18" />
+    <circle cx="380" cy="205" r="18" />
+    <circle cx="420" cy="290" r="18" />
+    <circle cx="390" cy="380" r="18" />
+    <circle cx="300" cy="425" r="18" />
+    <circle cx="210" cy="380" r="18" />
+    <circle cx="180" cy="290" r="18" />
+    <circle cx="220" cy="205" r="18" />
+  </g>
+
+  <!-- Central Auspicious Pomegranate & Turmeric Roots -->
+  <circle cx="300" cy="300" r="60" fill="#B32431" stroke="#8A1B25" stroke-width="3" />
+  <polygon points="292,236 300,224 308,236 316,230 300,242 284,230" fill="#8A1B25" />
+  <circle cx="300" cy="300" r="12" fill="#E9A62B" />
+  <circle cx="300" cy="300" r="5" fill="#FFFDF9" />
+
+  <!-- Surrounding Carved Fruit Slices (Apples/Melons) -->
+  <path d="M 240 280 Q 230 250 255 240 Q 275 250 265 285 Z" fill="#F4EDE0" stroke="#B88E3F" stroke-width="1.5" />
+  <path d="M 360 280 Q 370 250 345 240 Q 325 250 335 285 Z" fill="#F4EDE0" stroke="#B88E3F" stroke-width="1.5" />
+  <path d="M 260 345 Q 240 365 250 385 Q 275 385 280 355 Z" fill="#ECC94B" stroke="#D69E2E" stroke-width="1.5" />
+  <path d="M 340 345 Q 360 365 350 385 Q 325 385 320 355 Z" fill="#ECC94B" stroke="#D69E2E" stroke-width="1.5" />
+</svg>

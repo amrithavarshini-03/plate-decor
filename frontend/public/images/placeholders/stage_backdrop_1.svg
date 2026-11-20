@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 650" width="100%" height="100%">
+  <defs>
+    <linearGradient id="wallBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FAF5EE" />
+      <stop offset="100%" stop-color="#F2E6D5" />
+    </linearGradient>
+  </defs>
+
+  <!-- Warm Wall Backdrop -->
+  <rect width="1000" height="650" fill="url(#wallBg)" />
+
+  <!-- Banana Leaf Arch Pillars (Left & Right) -->
+  <g fill="#2F5D3A" stroke="#214229" stroke-width="2">
+    <!-- Left Plantain trunk & leaves -->
+    <rect x="60" y="80" width="28" height="520" fill="#244A2D" rx="6" />
+    <path d="M74 120 C20 100, 10 160, 74 180 Z" />
+    <path d="M74 200 C15 180, 5 240, 74 260 Z" />
+    <path d="M74 280 C20 260, 10 320, 74 340 Z" />
+    <path d="M74 360 C15 340, 5 400, 74 420 Z" />
+
+    <!-- Right Plantain trunk & leaves -->
+    <rect x="912" y="80" width="28" height="520" fill="#244A2D" rx="6" />
+    <path d="M926 120 C980 100, 990 160, 926 180 Z" />
+    <path d="M926 200 C985 180, 995 240, 926 260 Z" />
+    <path d="M926 280 C980 260, 990 320, 926 340 Z" />
+    <path d="M926 360 C985 340, 995 400, 926 420 Z" />
+  </g>
+
+  <!-- Cascading Marigold Garlands Hanging Vertically (Orange & Yellow) -->
+  <g fill="#E9A62B" stroke="#D97706" stroke-width="1.5">
+    <!-- Column 1 -->
+    <circle cx="200" cy="80" r="16" /><circle cx="200" cy="120" r="16" /><circle cx="200" cy="160" r="16" /><circle cx="200" cy="200" r="16" /><circle cx="200" cy="240" r="16" /><circle cx="200" cy="280" r="16" /><circle cx="200" cy="320" r="16" /><circle cx="200" cy="360" r="16" /><circle cx="200" cy="400" r="16" /><circle cx="200" cy="440" r="16" />
+    <polygon points="188,460 212,460 200,485" fill="#A8232F" />
+
+    <!-- Column 2 -->
+    <circle cx="350" cy="80" r="16" /><circle cx="350" cy="120" r="16" /><circle cx="350" cy="160" r="16" /><circle cx="350" cy="200" r="16" /><circle cx="350" cy="240" r="16" /><circle cx="350" cy="280" r="16" /><circle cx="350" cy="320" r="16" /><circle cx="350" cy="360" r="16" /><circle cx="350" cy="400" r="16" /><circle cx="350" cy="440" r="16" />
+    <polygon points="338,460 362,460 350,485" fill="#A8232F" />
+
+    <!-- Column 3 -->
+    <circle cx="500" cy="80" r="16" /><circle cx="500" cy="120" r="16" /><circle cx="500" cy="160" r="16" /><circle cx="500" cy="200" r="16" /><circle cx="500" cy="240" r="16" /><circle cx="500" cy="280" r="16" /><circle cx="500" cy="320" r="16" /><circle cx="500" cy="360" r="16" /><circle cx="500" cy="400" r="16" /><circle cx="500" cy="440" r="16" />
+    <polygon points="488,460 512,460 500,485" fill="#A8232F" />
+
+    <!-- Column 4 -->
+    <circle cx="650" cy="80" r="16" /><circle cx="650" cy="120" r="16" /><circle cx="650" cy="160" r="16" /><circle cx="650" cy="200" r="16" /><circle cx="650" cy="240" r="16" /><circle cx="650" cy="280" r="16" /><circle cx="650" cy="320" r="16" /><circle cx="650" cy="360" r="16" /><circle cx="650" cy="400" r="16" /><circle cx="650" cy="440" r="16" />
+    <polygon points="638,460 662,460 650,485" fill="#A8232F" />
+
+    <!-- Column 5 -->
+    <circle cx="800" cy="80" r="16" /><circle cx="800" cy="120" r="16" /><circle cx="800" cy="160" r="16" /><circle cx="800" cy="200" r="16" /><circle cx="800" cy="240" r="16" /><circle cx="800" cy="280" r="16" /><circle cx="800" cy="320" r="16" /><circle cx="800" cy="360" r="16" /><circle cx="800" cy="400" r="16" /><circle cx="800" cy="440" r="16" />
+    <polygon points="788,460 812,460 800,485" fill="#A8232F" />
+  </g>
+
+  <!-- Top Mango Leaf & Marigold Thoranam Arch -->
+  <path d="M60 70 Q 500 130 940 70" stroke="#C8A86B" stroke-width="6" fill="none" />
+
+  <!-- Center Stage Aura Motif (Grand Circular Brass Urli with floating petals) -->
+  <ellipse cx="500" cy="560" rx="140" ry="40" fill="#E4C580" stroke="#B88E3F" stroke-width="4" />
+  <ellipse cx="500" cy="556" rx="130" ry="32" fill="#2F5D3A" opacity="0.8" />
+  <circle cx="500" cy="554" r="14" fill="#A8232F" />
+</svg>

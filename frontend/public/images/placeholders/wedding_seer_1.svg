@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="silverGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="70%" stop-color="#F1F5F9" />
+      <stop offset="95%" stop-color="#CBD5E1" />
+      <stop offset="100%" stop-color="#94A3B8" />
+    </radialGradient>
+    <radialGradient id="silkGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8A1B25" />
+      <stop offset="80%" stop-color="#671018" />
+      <stop offset="100%" stop-color="#460B10" />
+    </radialGradient>
+  </defs>
+
+  <!-- Silver Thaalam Outer Rim -->
+  <circle cx="300" cy="300" r="280" fill="url(#silverGrad)" stroke="#94A3B8" stroke-width="6" />
+  <circle cx="300" cy="300" r="265" fill="none" stroke="#64748B" stroke-width="2.5" stroke-dasharray="5,5" />
+
+  <!-- Crimson Silk Base (Kanchipuram Red Fabric) -->
+  <circle cx="300" cy="300" r="250" fill="url(#silkGrad)" />
+
+  <!-- Outer Ring: Hand-aligned Cashews (Kaju) -->
+  <g fill="#FBF6EC" stroke="#E2D9C8" stroke-width="1">
+    <path d="M300 70 C310 70, 318 80, 315 95 C310 110, 290 100, 300 70 Z" transform="rotate(0 300 300)" />
+    <path d="M300 70 C310 70, 318 80, 315 95 C310 110, 290 100, 300 70 Z" transform="rotate(30 300 300)" />
+    <path d="M300 70 C310 70, 318 80, 315 95 C310 110, 290 100, 300 70 Z" transform="rotate(60 300 300)" />
+    <path d="M300 70 C310 70, 318 80, 315 95 C310 110, 290 100, 300 70 Z" transform="rotate(90 300 300)" />
+    <path d="M300 70 C310 70, 318 80, 315 95 C310 110, 290 100, 300 70 Z" transform="rotate(120 300 300)" />
+    <path d="M300 70 C310 70, 318 80, 315 95 C310 110, 290 100, 300 70 Z" transform="rotate(150 300 300)" />
+    <path d="M300 70 C310 70, 318 80, 315 95 C310 110, 290 100, 300 70 Z" transform="rotate(180 300 300)" />
+    <path d="M300 70 C310 70, 318 80, 315 95 C310 110, 290 100, 300 70 Z" transform="rotate(210 300 300)" />
+    <path d="M300 70 C310 70, 318 80, 315 95 C310 110, 290 100, 300 70 Z" transform="rotate(240 300 300)" />
+    <path d="M300 70 C310 70, 318 80, 315 95 C310 110, 290 100, 300 70 Z" transform="rotate(270 300 300)" />
+    <path d="M300 70 C310 70, 318 80, 315 95 C310 110, 290 100, 300 70 Z" transform="rotate(300 300 300)" />
+    <path d="M300 70 C310 70, 318 80, 315 95 C310 110, 290 100, 300 70 Z" transform="rotate(330 300 300)" />
+  </g>
+
+  <!-- Second Ring: Golden Almonds (Badam) -->
+  <g fill="#C08457" stroke="#8D5B38" stroke-width="1.2">
+    <ellipse cx="300" cy="140" rx="14" ry="24" transform="rotate(0 300 300)" />
+    <ellipse cx="300" cy="140" rx="14" ry="24" transform="rotate(45 300 300)" />
+    <ellipse cx="300" cy="140" rx="14" ry="24" transform="rotate(90 300 300)" />
+    <ellipse cx="300" cy="140" rx="14" ry="24" transform="rotate(135 300 300)" />
+    <ellipse cx="300" cy="140" rx="14" ry="24" transform="rotate(180 300 300)" />
+    <ellipse cx="300" cy="140" rx="14" ry="24" transform="rotate(225 300 300)" />
+    <ellipse cx="300" cy="140" rx="14" ry="24" transform="rotate(270 300 300)" />
+    <ellipse cx="300" cy="140" rx="14" ry="24" transform="rotate(315 300 300)" />
+  </g>
+
+  <!-- Centerpiece: Royal Dry Fruit Peacock Motif -->
+  <!-- Peacock Plumes -->
+  <g fill="#2F5D3A" stroke="#E9A62B" stroke-width="2">
+    <ellipse cx="300" cy="270" rx="20" ry="40" />
+    <ellipse cx="265" cy="285" rx="18" ry="38" transform="rotate(-25 265 285)" />
+    <ellipse cx="335" cy="285" rx="18" ry="38" transform="rotate(25 335 285)" />
+    <ellipse cx="235" cy="315" rx="16" ry="34" transform="rotate(-50 235 315)" />
+    <ellipse cx="365" cy="315" rx="16" ry="34" transform="rotate(50 365 315)" />
+  </g>
+  <!-- Peacock Plume Eyes (Marigold / Gold) -->
+  <g fill="#E9A62B">
+    <circle cx="300" cy="250" r="8" />
+    <circle cx="255" cy="270" r="7" />
+    <circle cx="345" cy="270" r="7" />
+    <circle cx="220" cy="310" r="6" />
+    <circle cx="380" cy="310" r="6" />
+  </g>
+  <!-- Peacock Body -->
+  <path d="M285 360 C280 320, 320 320, 315 360 C310 390, 290 390, 285 360 Z" fill="#1E3A8A" stroke="#3B82F6" stroke-width="2" />
+  <circle cx="300" cy="320" r="12" fill="#1E3A8A" />
+  <polygon points="300,314 308,318 300,322" fill="#E9A62B" />
+  <!-- Auspicious Silver Varak Leaf Accents -->
+  <polygon points="295,300 305,300 302,308" fill="#F8FAFC" opacity="0.9" />
+</svg>

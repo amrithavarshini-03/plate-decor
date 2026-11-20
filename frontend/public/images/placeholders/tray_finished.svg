@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="finishedBrass" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFDF9" />
+      <stop offset="80%" stop-color="#FAF1DE" />
+      <stop offset="100%" stop-color="#E5C785" />
+    </radialGradient>
+    <radialGradient id="finishedLeaf" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#427E51" />
+      <stop offset="80%" stop-color="#2F5D3A" />
+      <stop offset="100%" stop-color="#1E3E26" />
+    </radialGradient>
+  </defs>
+
+  <!-- Brass Rim -->
+  <circle cx="300" cy="300" r="280" fill="url(#finishedBrass)" stroke="#B88E3F" stroke-width="8" />
+  <circle cx="300" cy="300" r="260" fill="none" stroke="#D1AB5C" stroke-width="3" stroke-dasharray="6,6" />
+
+  <!-- Fresh Plantain Leaf Foundation -->
+  <circle cx="300" cy="300" r="245" fill="url(#finishedLeaf)" />
+  <line x1="300" y1="55" x2="300" y2="545" stroke="#427E51" stroke-width="2.5" />
+
+  <!-- Dense Outer Border of Golden Marigolds -->
+  <g fill="#E9A62B" stroke="#D48A18" stroke-width="1.5">
+    <circle cx="505" cy="300" r="20" />
+    <circle cx="488" cy="383" r="20" />
+    <circle cx="445" cy="445" r="20" />
+    <circle cx="383" cy="488" r="20" />
+    <circle cx="300" cy="505" r="20" />
+    <circle cx="217" cy="488" r="20" />
+    <circle cx="155" cy="445" r="20" />
+    <circle cx="112" cy="383" r="20" />
+    <circle cx="95" cy="300" r="20" />
+    <circle cx="112" cy="217" r="20" />
+    <circle cx="155" cy="155" r="20" />
+    <circle cx="217" cy="112" r="20" />
+    <circle cx="300" cy="95" r="20" />
+    <circle cx="383" cy="112" r="20" />
+    <circle cx="445" cy="155" r="20" />
+    <circle cx="488" cy="217" r="20" />
+  </g>
+
+  <!-- Inner Marigold Highlights -->
+  <g fill="#F3B94D">
+    <circle cx="505" cy="300" r="11" />
+    <circle cx="488" cy="383" r="11" />
+    <circle cx="445" cy="445" r="11" />
+    <circle cx="383" cy="488" r="11" />
+    <circle cx="300" cy="505" r="11" />
+    <circle cx="217" cy="488" r="11" />
+    <circle cx="155" cy="445" r="11" />
+    <circle cx="112" cy="383" r="11" />
+    <circle cx="95" cy="300" r="11" />
+    <circle cx="112" cy="217" r="11" />
+    <circle cx="155" cy="155" r="11" />
+    <circle cx="217" cy="112" r="11" />
+    <circle cx="300" cy="95" r="11" />
+    <circle cx="383" cy="112" r="11" />
+    <circle cx="445" cy="155" r="11" />
+    <circle cx="488" cy="217" r="11" />
+  </g>
+
+  <!-- Ring of Crimson Red Roses -->
+  <g fill="#A8232F" stroke="#8A1B25" stroke-width="1">
+    <circle cx="455" cy="300" r="16" />
+    <circle cx="434" cy="378" r="16" />
+    <circle cx="378" cy="434" r="16" />
+    <circle cx="300" cy="455" r="16" />
+    <circle cx="222" cy="434" r="16" />
+    <circle cx="166" cy="378" r="16" />
+    <circle cx="145" cy="300" r="16" />
+    <circle cx="166" cy="222" r="16" />
+    <circle cx="222" cy="166" r="16" />
+    <circle cx="300" cy="145" r="16" />
+    <circle cx="378" cy="166" r="16" />
+    <circle cx="434" cy="222" r="16" />
+  </g>
+
+  <!-- Carved Melon Swan & Fruit Mandala in Center -->
+  <g fill="#FEF3C7" stroke="#D97706" stroke-width="2">
+    <ellipse cx="300" cy="300" rx="75" ry="50" />
+    <path d="M 240 300 C 230 260, 280 240, 300 270 C 320 240, 370 260, 360 300 Z" fill="#FDE68A" />
+  </g>
+
+  <!-- Sacred Kumkum focal center -->
+  <circle cx="300" cy="300" r="16" fill="#A8232F" stroke="#FFFDF9" stroke-width="2" />
+  <circle cx="300" cy="300" r="6" fill="#FFFDF9" />
+</svg>
