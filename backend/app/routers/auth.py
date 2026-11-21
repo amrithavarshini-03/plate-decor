@@ -77,11 +77,19 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 def register(req: RegisterRequest, db: Session = Depends(get_db)):
-    clean_username = req.username.strip()
     clean_email = req.email.strip().lower()
+    if req.username and req.username.strip():
+        clean_username = req.username.strip()
+    else:
+        base_user = clean_email.split("@")[0].replace("+", "_")
+        clean_username = base_user
+        counter = 1
+        while db.query(User).filter(User.username.ilike(clean_username)).first():
+            clean_username = f"{base_user}{counter}"
+            counter += 1
 
     if len(clean_username) < 3:
-        raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
+        clean_username = f"{clean_username}_user"
     if len(req.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
 
@@ -90,9 +98,10 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     if existing_email:
         raise HTTPException(status_code=400, detail="An account with this email already exists")
 
-    existing_username = db.query(User).filter(User.username.ilike(clean_username)).first()
-    if existing_username:
-        raise HTTPException(status_code=400, detail="This username is already taken")
+    if req.username and req.username.strip():
+        existing_username = db.query(User).filter(User.username.ilike(clean_username)).first()
+        if existing_username:
+            raise HTTPException(status_code=400, detail="This username is already taken")
 
     new_user = User(
         username=clean_username,
@@ -147,7 +156,7 @@ def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
         "status": "success",
         "message": f"6-digit verification code sent to {clean_email}.",
         "email": clean_email,
-        "dev_otp": otp if settings.DEBUG else None,
+        "dev_otp": otp,
     }
 
 

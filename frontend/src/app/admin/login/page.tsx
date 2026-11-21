@@ -10,8 +10,8 @@ import { PetalButton } from "@/components/primitives/PetalButton";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [identifier, setIdentifier] = useState("admin");
-  const [password, setPassword] = useState("AdminDecors@2026");
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

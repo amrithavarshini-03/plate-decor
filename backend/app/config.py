@@ -39,6 +39,14 @@ class Settings(BaseSettings):
     WHATSAPP_PHONE_NUMBER_ID: str = ""
     CLOUDINARY_URL: str = ""
 
+    # SMTP Email (Gmail / Custom)
+    ENABLE_SMTP_EMAIL: bool = False
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = ""
+
     # Uploads directory
     UPLOADS_DIR: str = "uploads"
 

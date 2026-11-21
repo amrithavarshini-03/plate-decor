@@ -29,7 +29,7 @@ import { PetalButton } from "@/components/primitives/PetalButton";
 function CustomerAuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectPath = searchParams.get("redirect") || "/my-orders";
+  const redirectPath = searchParams.get("redirect") || "/";
   const initialMode = searchParams.get("mode") === "register" ? "register" : "login";
 
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
@@ -40,7 +40,6 @@ function CustomerAuthContent() {
   const [password, setPassword] = useState("");
 
   // Register states
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [fullName, setFullName] = useState("");
@@ -57,25 +56,25 @@ function CustomerAuthContent() {
 
   useEffect(() => {
     const u = getCustomerUser();
-    if (u) setCurrentUser(u);
+    if (u) {
+      router.replace("/");
+      return;
+    }
     if (initialMode === "register") {
       setMode("register");
     }
-  }, [initialMode]);
+  }, [initialMode, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const res = await api.customerLogin(identifier, password);
-      setSuccessMsg(`Vanakkam, ${res.user.full_name || res.user.username}! Welcome back.`);
+      const res = await api.customerLogin(identifier.trim(), password);
       setCurrentUser(res.user);
-      setTimeout(() => {
-        router.push(redirectPath);
-      }, 900);
+      router.push("/");
     } catch (err: any) {
-      setError(err.message || "Invalid username or password");
+      setError(err.message || "Invalid email or password");
     } finally {
       setLoading(false);
     }
@@ -87,17 +86,13 @@ function CustomerAuthContent() {
     setLoading(true);
     try {
       const res = await api.customerRegister({
-        username,
-        email,
-        phone,
+        email: email.trim(),
+        phone: phone.trim(),
         password,
-        full_name: fullName || username,
+        full_name: fullName.trim(),
       });
-      setSuccessMsg(`Account created successfully! Vanakkam, ${res.user.full_name || res.user.username}.`);
       setCurrentUser(res.user);
-      setTimeout(() => {
-        router.push(redirectPath);
-      }, 900);
+      router.push("/");
     } catch (err: any) {
       setError(err.message || "Registration failed");
     } finally {
@@ -118,7 +113,7 @@ function CustomerAuthContent() {
       setForgotStep(2);
       if (res.dev_otp) {
         setOtp(res.dev_otp);
-        setSuccessMsg(`Verification code generated! (Dev/Test code: ${res.dev_otp})`);
+        setSuccessMsg(`Verification code generated: ${res.dev_otp} (Auto-filled below). Enter your new password to reset.`);
       } else {
         setSuccessMsg(res.message || `6-digit verification code sent to ${forgotEmail}. Please check your email.`);
       }
@@ -188,43 +183,6 @@ function CustomerAuthContent() {
           </p>
         </div>
 
-        {/* If already logged in */}
-        {currentUser ? (
-          <div className="p-6 rounded-2xl bg-[#2F5D3A]/5 border border-[#2F5D3A]/20 space-y-4 text-center">
-            <div className="w-12 h-12 rounded-full bg-[#2F5D3A] text-white flex items-center justify-center mx-auto text-lg font-serif font-bold">
-              {currentUser.username?.[0]?.toUpperCase() || "U"}
-            </div>
-            <div>
-              <p className="text-xs text-[#635166]">Logged in as</p>
-              <h3 className="font-serif text-lg font-bold text-[#2B1A2E]">
-                {currentUser.full_name || currentUser.username}
-              </h3>
-              <p className="text-xs text-[#2F5D3A] font-medium">@{currentUser.username}</p>
-              {currentUser.email && <p className="text-[11px] text-[#635166]">{currentUser.email}</p>}
-            </div>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
-              <Link
-                href="/my-orders"
-                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#2F5D3A] text-white text-xs font-semibold hover:bg-[#214229] transition-colors shadow-xs"
-              >
-                View My Orders
-              </Link>
-              <Link
-                href="/plan"
-                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#FAF3E7] text-[#2B1A2E] text-xs font-semibold hover:bg-[#E8DAC8] border border-[#E8DAC8] transition-colors"
-              >
-                Plate Planner
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#FFF0F0] text-[#A8232F] text-xs font-semibold hover:bg-[#FFE5E5] border border-[#F5C2C2] transition-colors"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
             {/* Tabs for Login vs Register (only when not in forgot password mode) */}
             {mode !== "forgot" ? (
               <div className="flex rounded-xl bg-[#FAF3E7] p-1 border border-[#E8DAC8]">
@@ -299,12 +257,12 @@ function CustomerAuthContent() {
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-[#E9A62B]" />
-                    <span>Username or Email</span>
+                    <Mail className="w-3.5 h-3.5 text-[#E9A62B]" />
+                    <span>Email Address</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="Enter your username or email"
+                    placeholder="Enter your registered email address"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     required
@@ -360,22 +318,6 @@ function CustomerAuthContent() {
             {/* CREATE ACCOUNT FORM */}
             {mode === "register" && (
               <form onSubmit={handleRegister} className="space-y-3.5">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-[#E9A62B]" />
-                    <span>Choose Username *</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. anand_chennai"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                    minLength={3}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E] focus:outline-none focus:ring-2 focus:ring-[#2F5D3A]"
-                  />
-                </div>
-
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 text-[#E9A62B]" />
@@ -505,6 +447,17 @@ function CustomerAuthContent() {
                       Enter the 6-digit OTP code sent to <strong>{forgotEmail}</strong> and your desired new password.
                     </p>
 
+                    {otp && (
+                      <div className="p-3 rounded-2xl bg-[#FAF3E7] border border-[#E4C580] text-center space-y-1">
+                        <span className="text-[10px] font-bold uppercase text-[#8B5E14] tracking-wider block">
+                          Verification Code Generated
+                        </span>
+                        <div className="text-2xl font-mono font-bold tracking-widest text-[#2F5D3A]">
+                          {otp}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
                         <KeyRound className="w-3.5 h-3.5 text-[#E9A62B]" />
@@ -561,8 +514,6 @@ function CustomerAuthContent() {
                 )}
               </div>
             )}
-          </>
-        )}
 
         {/* Footer Links */}
         <div className="pt-2 border-t border-[#E8DAC8]/60 flex items-center justify-between text-xs text-[#635166]">

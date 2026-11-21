@@ -1,5 +1,8 @@
 import logging
+import smtplib
 from abc import ABC, abstractmethod
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from typing import List
 import httpx
 from app.config import settings
@@ -181,6 +184,60 @@ class WhatsAppCloudNotificationService(BaseNotificationService):
         return True
 
 
+class SMTPNotificationService(BaseNotificationService):
+    """Direct SMTP email service (supports Gmail, Outlook, AWS SES SMTP, etc.)."""
+
+    def __init__(self, host: str, port: int, user: str, password: str, from_email: str):
+        self.host = host
+        self.port = port
+        self.user = user
+        self.password = password
+        self.from_email = from_email or user
+
+    def send_booking_confirmation(self, booking_data: dict) -> bool:
+        return True
+
+    def send_quote_notification(self, booking_data: dict, amount: float) -> bool:
+        return True
+
+    def send_status_update(self, booking_data: dict, new_status: str) -> bool:
+        return True
+
+    def send_password_reset_otp(self, email: str, otp: str) -> bool:
+        if not self.user or not self.password or not email:
+            return False
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = "🌸 BRB Decors — Your Password Reset OTP"
+            msg["From"] = self.from_email
+            msg["To"] = email
+
+            html = f"""
+            <div style="font-family: serif; color: #2B1A2E; background: #FBF6EC; padding: 24px; border-radius: 16px; border: 2px solid #E4C580;">
+                <h2 style="color: #2F5D3A;">Password Reset Verification</h2>
+                <p>Vanakkam! We received a request to reset your password for your BRB Decors account.</p>
+                <p>Your one-time 6-digit verification code is:</p>
+                <div style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #2F5D3A; background: #FFFDF9; padding: 16px; border-radius: 12px; border: 1px solid #E8DAC8; text-align: center; margin: 20px 0;">
+                    {otp}
+                </div>
+                <p style="font-size: 12px; color: #635166;">This code is valid for 10 minutes. If you did not request this, please ignore this email.</p>
+                <hr style="border: 0; border-top: 1px solid #E8DAC8; margin: 20px 0;" />
+                <p style="font-size: 11px; color: #8B5E14;">BRB Decors Ceremonial Studio — Tamil Nadu</p>
+            </div>
+            """
+            msg.attach(MIMEText(html, "html"))
+
+            with smtplib.SMTP(self.host, self.port, timeout=10) as server:
+                server.starttls()
+                server.login(self.user, self.password)
+                server.sendmail(self.from_email, [email], msg.as_string())
+            logger.info(f"📧 Sent OTP email to {email} via SMTP")
+            return True
+        except Exception as e:
+            logger.warning(f"Failed to send OTP via SMTP: {e}")
+            return False
+
+
 class CompositeNotificationService(BaseNotificationService):
     """Dispatches to multiple active notification providers."""
 
@@ -212,6 +269,17 @@ def get_notification_service() -> BaseNotificationService:
             ResendEmailNotificationService(
                 api_key=settings.RESEND_API_KEY,
                 from_email=settings.RESEND_FROM_EMAIL,
+            )
+        )
+
+    if (settings.ENABLE_SMTP_EMAIL or settings.SMTP_USER) and settings.SMTP_PASSWORD:
+        providers.append(
+            SMTPNotificationService(
+                host=settings.SMTP_HOST,
+                port=settings.SMTP_PORT,
+                user=settings.SMTP_USER,
+                password=settings.SMTP_PASSWORD,
+                from_email=settings.SMTP_FROM_EMAIL or settings.SMTP_USER,
             )
         )
 

@@ -275,11 +275,15 @@ export const api = {
     return { token: data.access_token, user };
   },
 
-  async customerRegister(data: { username: string; email: string; password: string; full_name?: string; phone?: string }) {
+  async customerRegister(data: { email: string; password: string; full_name?: string; phone?: string; username?: string }) {
+    const payload = {
+      ...data,
+      username: data.username || data.email.split("@")[0].replace("+", "_"),
+    };
     const res = await fetch(`${BASE_URL}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -287,7 +291,7 @@ export const api = {
     }
     const resData = await res.json();
     const user: CustomerUser = {
-      username: resData.user_username || data.username,
+      username: resData.user_username || payload.username,
       email: resData.user_email,
       full_name: resData.user_name || data.full_name,
       phone: resData.user_phone || data.phone,

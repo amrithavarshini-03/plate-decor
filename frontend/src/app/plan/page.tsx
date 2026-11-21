@@ -114,7 +114,6 @@ function PlatePlannerInner() {
   const [authMode, setAuthMode] = useState<"register" | "login">("register");
   const [authIdentifier, setAuthIdentifier] = useState("");
   const [authPassword, setAuthPassword] = useState("");
-  const [authUsername, setAuthUsername] = useState("");
   const [authFullName, setAuthFullName] = useState("");
   const [authPhone, setAuthPhone] = useState("");
   const [authEmail, setAuthEmail] = useState("");
@@ -440,8 +439,7 @@ function PlatePlannerInner() {
     setAuthLoading(true);
     try {
       const res = await api.customerRegister({
-        username: authUsername,
-        full_name: authFullName || authUsername,
+        full_name: authFullName,
         phone: authPhone,
         email: authEmail,
         password: authPassword,
@@ -1592,36 +1590,19 @@ function PlatePlannerInner() {
 
             {authMode === "register" ? (
               <form onSubmit={handleModalRegister} className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
-                      <User className="w-3 h-3 text-[#E9A62B]" />
-                      <span>Username *</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. anand92"
-                      value={authUsername}
-                      onChange={(e) => setAuthUsername(e.target.value)}
-                      required
-                      minLength={3}
-                      className="w-full px-3 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E]"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
-                      <User className="w-3 h-3 text-[#E9A62B]" />
-                      <span>Full Name *</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Anand S"
-                      value={authFullName}
-                      onChange={(e) => setAuthFullName(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E]"
-                    />
-                  </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
+                    <User className="w-3 h-3 text-[#E9A62B]" />
+                    <span>Your Full Name *</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Anand Sundaram"
+                    value={authFullName}
+                    onChange={(e) => setAuthFullName(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E]"
+                  />
                 </div>
 
                 <div className="space-y-1">
