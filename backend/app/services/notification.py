@@ -20,6 +20,10 @@ class BaseNotificationService(ABC):
     def send_status_update(self, booking_data: dict, new_status: str) -> bool:
         pass
 
+    @abstractmethod
+    def send_password_reset_otp(self, email: str, otp: str) -> bool:
+        pass
+
 
 class ConsoleNotificationService(BaseNotificationService):
     """Fallback / development logger notification service."""
@@ -45,6 +49,12 @@ class ConsoleNotificationService(BaseNotificationService):
     def send_status_update(self, booking_data: dict, new_status: str) -> bool:
         logger.info(
             f"🌸 [NOTIFICATION] Status Changed: {booking_data.get('id')} -> {new_status}"
+        )
+        return True
+
+    def send_password_reset_otp(self, email: str, otp: str) -> bool:
+        logger.info(
+            f"🔑 [PASSWORD RESET OTP] Target: {email} | OTP Code: {otp} (Valid for 10 minutes)"
         )
         return True
 
@@ -89,6 +99,38 @@ class ResendEmailNotificationService(BaseNotificationService):
 
     def send_status_update(self, booking_data: dict, new_status: str) -> bool:
         return True
+
+    def send_password_reset_otp(self, email: str, otp: str) -> bool:
+        if not self.api_key or not email:
+            logger.info(f"🔑 [OTP Fallback Logger] Email: {email} | OTP: {otp}")
+            return True
+        try:
+            url = "https://api.resend.com/emails"
+            headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+            payload = {
+                "from": self.from_email,
+                "to": [email],
+                "subject": "🌸 BRB Decors — Your Password Reset OTP",
+                "html": f"""
+                <div style="font-family: serif; color: #2B1A2E; background: #FBF6EC; padding: 24px; border-radius: 16px; border: 2px solid #E4C580;">
+                    <h2 style="color: #2F5D3A;">Password Reset Verification</h2>
+                    <p>Vanakkam! We received a request to reset your password for your BRB Decors account.</p>
+                    <p>Your one-time 6-digit verification code is:</p>
+                    <div style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #2F5D3A; background: #FFFDF9; padding: 16px; border-radius: 12px; border: 1px solid #E8DAC8; text-align: center; margin: 20px 0;">
+                        {otp}
+                    </div>
+                    <p style="font-size: 12px; color: #635166;">This code is valid for 10 minutes. If you did not request this, please ignore this email.</p>
+                    <hr style="border: 0; border-top: 1px solid #E8DAC8; margin: 20px 0;" />
+                    <p style="font-size: 11px; color: #8B5E14;">BRB Decors Ceremonial Studio — Tamil Nadu</p>
+                </div>
+                """,
+            }
+            with httpx.Client(timeout=5.0) as client:
+                res = client.post(url, headers=headers, json=payload)
+                return res.status_code in [200, 201]
+        except Exception as e:
+            logger.warning(f"Failed to send OTP via Resend: {e}")
+            return True
 
 
 class WhatsAppCloudNotificationService(BaseNotificationService):
@@ -135,6 +177,9 @@ class WhatsAppCloudNotificationService(BaseNotificationService):
     def send_status_update(self, booking_data: dict, new_status: str) -> bool:
         return True
 
+    def send_password_reset_otp(self, email: str, otp: str) -> bool:
+        return True
+
 
 class CompositeNotificationService(BaseNotificationService):
     """Dispatches to multiple active notification providers."""
@@ -152,6 +197,10 @@ class CompositeNotificationService(BaseNotificationService):
 
     def send_status_update(self, booking_data: dict, new_status: str) -> bool:
         results = [s.send_status_update(booking_data, new_status) for s in self.services]
+        return any(results)
+
+    def send_password_reset_otp(self, email: str, otp: str) -> bool:
+        results = [s.send_password_reset_otp(email, otp) for s in self.services]
         return any(results)
 
 

@@ -79,9 +79,8 @@ export default function ContactPage() {
             <div className="flex items-start gap-4">
               <MapPin className="w-5 h-5 text-[#2F5D3A] shrink-0 mt-0.5" />
               <div>
-                <span className="text-[11px] font-bold uppercase text-[#635166] block">Studio Address</span>
-                <span className="text-sm font-semibold text-[#2B1A2E]">{SITE_CONFIG.address}</span>
-                <p className="text-xs text-[#635166] mt-0.5">Serving Chennai, Madurai, Coimbatore & across Tamil Nadu</p>
+                <span className="text-[11px] font-bold uppercase text-[#635166] block">Address</span>
+                <span className="text-sm font-semibold text-[#2B1A2E]">Coimbatore</span>
               </div>
             </div>
 
@@ -90,25 +89,6 @@ export default function ContactPage() {
               <div>
                 <span className="text-[11px] font-bold uppercase text-[#635166] block">Consultation Hours</span>
                 <span className="text-sm font-semibold text-[#2B1A2E]">{SITE_CONFIG.hours}</span>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[#E9A62B] shrink-0 mt-0.5">
-                <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-              </svg>
-              <div>
-                <span className="text-[11px] font-bold uppercase text-[#635166] block">Instagram</span>
-                <a
-                  href={SITE_CONFIG.instagramUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-semibold text-[#2F5D3A] hover:underline"
-                >
-                  {SITE_CONFIG.instagramHandle}
-                </a>
               </div>
             </div>
           </div>

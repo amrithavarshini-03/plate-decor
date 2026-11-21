@@ -19,6 +19,11 @@ import {
   ShieldCheck,
   ShoppingBag,
   ExternalLink,
+  Lock,
+  User,
+  Mail,
+  Phone,
+  AlertCircle,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { SITE_CONFIG } from "@/config/site.config";
@@ -103,6 +108,18 @@ function PlatePlannerInner() {
   const [bookingReference, setBookingReference] = useState<string>("");
   const [shopPreference, setShopPreference] = useState<"now" | "later" | null>(null);
   const [hasExistingOrders, setHasExistingOrders] = useState(false);
+
+  // Auth gating modal states (triggered if user not signed in when ordering)
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<"register" | "login">("register");
+  const [authIdentifier, setAuthIdentifier] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authUsername, setAuthUsername] = useState("");
+  const [authFullName, setAuthFullName] = useState("");
+  const [authPhone, setAuthPhone] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
 
   // Sync template from URL query params (e.g. from /gallery "Plan one like this")
   useEffect(() => {
@@ -271,9 +288,12 @@ function PlatePlannerInner() {
     );
   };
 
-  const handleFinalSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const executeBookingOrder = async (custUser?: any) => {
     setSubmitting(true);
+    const finalName = custUser?.full_name || formData.name || "Client";
+    const finalPhone = custUser?.phone || formData.phone || "Not specified";
+    const finalEmail = custUser?.email || formData.email || undefined;
+
     try {
       const inspirations = formData.uploadedImages.map((img, i) => ({
         type: "image",
@@ -298,9 +318,9 @@ function PlatePlannerInner() {
         .join("\n");
 
       const res = await api.createBooking({
-        customer_name: formData.name || "Client",
-        phone: formData.phone || "Not specified",
-        email: formData.email || undefined,
+        customer_name: finalName,
+        phone: finalPhone,
+        email: finalEmail,
         city: formData.city,
         venue: formData.venue || undefined,
         function_date: formData.date || "Upcoming Auspicious Date",
@@ -345,9 +365,9 @@ function PlatePlannerInner() {
 
       const fallbackBooking: any = {
         id: fallbackId,
-        customer_name: formData.name || "Client",
-        phone: formData.phone || "Not specified",
-        email: formData.email,
+        customer_name: finalName,
+        phone: finalPhone,
+        email: finalEmail,
         city: formData.city,
         venue: formData.venue,
         function_date: formData.date || "Upcoming Auspicious Date",
@@ -372,6 +392,72 @@ function PlatePlannerInner() {
       setSubmitting(false);
       setIsSubmitted(true);
       triggerGrandPetalShower();
+    }
+  };
+
+  const handleFinalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const customer = getCustomerUser();
+    if (!customer) {
+      // Pre-fill auth form fields from Step 1 inputs
+      if (formData.name) setAuthFullName(formData.name);
+      if (formData.phone) setAuthPhone(formData.phone);
+      if (formData.email) {
+        setAuthEmail(formData.email);
+        setAuthIdentifier(formData.email);
+      }
+      setAuthError(null);
+      setShowAuthModal(true);
+      return;
+    }
+    await executeBookingOrder(customer);
+  };
+
+  const handleModalLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      const res = await api.customerLogin(authIdentifier, authPassword);
+      setShowAuthModal(false);
+      setFormData((prev) => ({
+        ...prev,
+        name: res.user.full_name || prev.name,
+        email: res.user.email || prev.email,
+        phone: res.user.phone || prev.phone,
+      }));
+      await executeBookingOrder(res.user);
+    } catch (err: any) {
+      setAuthError(err.message || "Invalid username or password");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleModalRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      const res = await api.customerRegister({
+        username: authUsername,
+        full_name: authFullName || authUsername,
+        phone: authPhone,
+        email: authEmail,
+        password: authPassword,
+      });
+      setShowAuthModal(false);
+      setFormData((prev) => ({
+        ...prev,
+        name: res.user.full_name || authFullName,
+        email: res.user.email || authEmail,
+        phone: res.user.phone || authPhone,
+      }));
+      await executeBookingOrder(res.user);
+    } catch (err: any) {
+      setAuthError(err.message || "Registration failed");
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -1437,6 +1523,217 @@ function PlatePlannerInner() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Auth Gating Modal for Non-Signed-In Customers */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[#FFFDF9] max-w-md w-full rounded-3xl p-6 sm:p-8 border-2 border-[#E4C580] shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 relative">
+            <button
+              onClick={() => setShowAuthModal(false)}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-[#FAF3E7] hover:bg-[#E8DAC8] text-[#2B1A2E] flex items-center justify-center transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="text-center space-y-1 pt-1">
+              <div className="w-12 h-12 rounded-full bg-[#2F5D3A] text-[#FBF6EC] mx-auto flex items-center justify-center shadow-md">
+                <Lock className="w-6 h-6 text-[#E9A62B]" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#2F5D3A] block">
+                Sign In Required to Place Order
+              </span>
+              <h3 className="font-serif text-2xl font-bold text-[#2B1A2E]">
+                {authMode === "register" ? "Create Customer Account" : "Sign In to Your Account"}
+              </h3>
+              <p className="text-xs text-[#635166]">
+                {authMode === "register"
+                  ? "Create a quick account to save your plate dream, receive formal quotes, and track orders."
+                  : "Sign in with your BRB Decors account to complete this ceremonial booking."}
+              </p>
+            </div>
+
+            {/* Toggle Tabs */}
+            <div className="flex rounded-xl bg-[#FAF3E7] p-1 border border-[#E8DAC8]">
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("register");
+                  setAuthError(null);
+                }}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  authMode === "register" ? "bg-[#2F5D3A] text-white shadow-xs" : "text-[#635166]"
+                }`}
+              >
+                New User (Sign Up)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("login");
+                  setAuthError(null);
+                }}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  authMode === "login" ? "bg-[#2F5D3A] text-white shadow-xs" : "text-[#635166]"
+                }`}
+              >
+                Existing User (Sign In)
+              </button>
+            </div>
+
+            {authError && (
+              <div className="p-2.5 rounded-xl bg-[#FFF0F0] border border-[#F5C2C2] text-xs text-[#A8232F] flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{authError}</span>
+              </div>
+            )}
+
+            {authMode === "register" ? (
+              <form onSubmit={handleModalRegister} className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
+                      <User className="w-3 h-3 text-[#E9A62B]" />
+                      <span>Username *</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. anand92"
+                      value={authUsername}
+                      onChange={(e) => setAuthUsername(e.target.value)}
+                      required
+                      minLength={3}
+                      className="w-full px-3 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E]"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
+                      <User className="w-3 h-3 text-[#E9A62B]" />
+                      <span>Full Name *</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Anand S"
+                      value={authFullName}
+                      onChange={(e) => setAuthFullName(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E]"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
+                    <Phone className="w-3 h-3 text-[#E9A62B]" />
+                    <span>WhatsApp Contact Number *</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="e.g. +91 98765 43210"
+                    value={authPhone}
+                    onChange={(e) => setAuthPhone(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
+                    <Mail className="w-3 h-3 text-[#E9A62B]" />
+                    <span>Email Address *</span>
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="e.g. anand@gmail.com"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
+                    <Lock className="w-3 h-3 text-[#E9A62B]" />
+                    <span>Create Password (min. 6 characters) *</span>
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Secure password"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full px-3 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E]"
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <PetalButton
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full py-2.5 flex items-center justify-center gap-2"
+                  >
+                    <span>{authLoading ? "Creating & Booking..." : "Create Account & Place Order"}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </PetalButton>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleModalLogin} className="space-y-3.5">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
+                    <User className="w-3 h-3 text-[#E9A62B]" />
+                    <span>Username or Email *</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter username or email"
+                    value={authIdentifier}
+                    onChange={(e) => setAuthIdentifier(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
+                      <Lock className="w-3 h-3 text-[#E9A62B]" />
+                      <span>Password *</span>
+                    </label>
+                    <Link
+                      href="/login?mode=forgot"
+                      target="_blank"
+                      className="text-[10px] text-[#8B5E14] hover:underline"
+                    >
+                      Forgot Password?
+                    </Link>
+                  </div>
+                  <input
+                    type="password"
+                    placeholder="Enter password"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E]"
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <PetalButton
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full py-2.5 flex items-center justify-center gap-2"
+                  >
+                    <span>{authLoading ? "Signing in & Booking..." : "Sign In & Place Order"}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </PetalButton>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

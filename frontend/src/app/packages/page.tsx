@@ -150,15 +150,19 @@ export default function PackagesPage() {
             </div>
 
             <div className="pt-8">
-              <PetalButton
-                href={`/plan?package=${tier.id}&plates=${tier.plateCount}`}
-                size="md"
-                variant={tier.popular ? "primary" : "secondary"}
-                className="w-full"
-                icon={<ArrowRight className="w-3.5 h-3.5" />}
+              <button
+                type="button"
+                disabled
+                className={`w-full py-3 px-6 rounded-full text-xs font-semibold select-none flex items-center justify-center gap-2 cursor-not-allowed ${
+                  tier.popular
+                    ? "bg-[#2F5D3A]/15 text-[#2F5D3A] border border-[#2F5D3A]/30"
+                    : "bg-[#FAF5EE] text-[#635166] border border-[#E8DAC8]"
+                }`}
+                title="Package customizations coming soon"
               >
-                Customize This Package
-              </PetalButton>
+                <span>Customize This Package</span>
+                <ArrowRight className="w-3.5 h-3.5 opacity-60" />
+              </button>
             </div>
           </div>
         ))}

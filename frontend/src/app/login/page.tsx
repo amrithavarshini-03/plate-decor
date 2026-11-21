@@ -8,10 +8,14 @@ import {
   Lock,
   User,
   Mail,
+  Phone,
   ArrowRight,
+  ArrowLeft,
   AlertCircle,
   CheckCircle,
   ShieldCheck,
+  KeyRound,
+  RefreshCw,
 } from "lucide-react";
 import {
   api,
@@ -25,17 +29,27 @@ import { PetalButton } from "@/components/primitives/PetalButton";
 function CustomerAuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectPath = searchParams.get("redirect") || "/plan";
+  const redirectPath = searchParams.get("redirect") || "/my-orders";
+  const initialMode = searchParams.get("mode") === "register" ? "register" : "login";
 
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Form states
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+
+  // Register states
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [fullName, setFullName] = useState("");
+
+  // Forgot password states
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [forgotStep, setForgotStep] = useState<1 | 2>(1); // 1 = request OTP, 2 = verify & reset
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +58,10 @@ function CustomerAuthContent() {
   useEffect(() => {
     const u = getCustomerUser();
     if (u) setCurrentUser(u);
-  }, []);
+    if (initialMode === "register") {
+      setMode("register");
+    }
+  }, [initialMode]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +89,7 @@ function CustomerAuthContent() {
       const res = await api.customerRegister({
         username,
         email,
+        phone,
         password,
         full_name: fullName || username,
       });
@@ -82,6 +100,52 @@ function CustomerAuthContent() {
       }, 900);
     } catch (err: any) {
       setError(err.message || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) {
+      setError("Please enter your registered email address.");
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await api.forgotPassword(forgotEmail.trim());
+      setForgotStep(2);
+      setSuccessMsg(res.message || `6-digit verification code sent to ${forgotEmail}. Please check your email.`);
+    } catch (err: any) {
+      setError(err.message || "Could not send OTP. Please check the email address.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp.trim() || !newPassword) {
+      setError("Please enter the 6-digit OTP and your new password.");
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await api.resetPassword({
+        email: forgotEmail.trim(),
+        otp: otp.trim(),
+        new_password: newPassword,
+      });
+      setSuccessMsg(res.message || "Password changed successfully! You can now sign in.");
+      setMode("login");
+      setIdentifier(forgotEmail.trim());
+      setForgotStep(1);
+      setOtp("");
+      setNewPassword("");
+    } catch (err: any) {
+      setError(err.message || "Password reset failed. Please verify the OTP.");
     } finally {
       setLoading(false);
     }
@@ -108,7 +172,9 @@ function CustomerAuthContent() {
             {SITE_CONFIG.businessName}
           </h1>
           <p className="text-xs text-[#635166]">
-            Sign in to track your ceremonial plate bookings, quotes & designs.
+            {mode === "forgot"
+              ? "Reset your password via one-time verification code."
+              : "Sign in to track your ceremonial plate bookings, formal quotes & designs."}
           </p>
         </div>
 
@@ -124,17 +190,24 @@ function CustomerAuthContent() {
                 {currentUser.full_name || currentUser.username}
               </h3>
               <p className="text-xs text-[#2F5D3A] font-medium">@{currentUser.username}</p>
+              {currentUser.email && <p className="text-[11px] text-[#635166]">{currentUser.email}</p>}
             </div>
-            <div className="flex items-center justify-center gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
+              <Link
+                href="/my-orders"
+                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#2F5D3A] text-white text-xs font-semibold hover:bg-[#214229] transition-colors shadow-xs"
+              >
+                View My Orders
+              </Link>
               <Link
                 href="/plan"
-                className="px-4 py-2 rounded-xl bg-[#2F5D3A] text-white text-xs font-semibold hover:bg-[#214229] transition-colors"
+                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#FAF3E7] text-[#2B1A2E] text-xs font-semibold hover:bg-[#E8DAC8] border border-[#E8DAC8] transition-colors"
               >
-                Go to Plate Planner
+                Plate Planner
               </Link>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 rounded-xl bg-[#FAF3E7] text-[#A8232F] text-xs font-semibold hover:bg-[#FFF0F0] border border-[#E8DAC8] transition-colors"
+                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#FFF0F0] text-[#A8232F] text-xs font-semibold hover:bg-[#FFE5E5] border border-[#F5C2C2] transition-colors"
               >
                 Sign Out
               </button>
@@ -142,37 +215,59 @@ function CustomerAuthContent() {
           </div>
         ) : (
           <>
-            {/* Tabs for Login vs Register */}
-            <div className="flex rounded-xl bg-[#FAF3E7] p-1 border border-[#E8DAC8]">
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("login");
-                  setError(null);
-                }}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                  mode === "login"
-                    ? "bg-[#2F5D3A] text-white shadow-xs"
-                    : "text-[#635166] hover:text-[#2B1A2E]"
-                }`}
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("register");
-                  setError(null);
-                }}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
-                  mode === "register"
-                    ? "bg-[#2F5D3A] text-white shadow-xs"
-                    : "text-[#635166] hover:text-[#2B1A2E]"
-                }`}
-              >
-                Create Account
-              </button>
-            </div>
+            {/* Tabs for Login vs Register (only when not in forgot password mode) */}
+            {mode !== "forgot" ? (
+              <div className="flex rounded-xl bg-[#FAF3E7] p-1 border border-[#E8DAC8]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("login");
+                    setError(null);
+                    setSuccessMsg(null);
+                  }}
+                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                    mode === "login"
+                      ? "bg-[#2F5D3A] text-white shadow-xs"
+                      : "text-[#635166] hover:text-[#2B1A2E]"
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("register");
+                    setError(null);
+                    setSuccessMsg(null);
+                  }}
+                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                    mode === "register"
+                      ? "bg-[#2F5D3A] text-white shadow-xs"
+                      : "text-[#635166] hover:text-[#2B1A2E]"
+                  }`}
+                >
+                  Create Account
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between pb-2 border-b border-[#E8DAC8]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("login");
+                    setError(null);
+                    setSuccessMsg(null);
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2F5D3A] hover:underline"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to Sign In</span>
+                </button>
+                <span className="text-xs font-serif font-bold text-[#2B1A2E]">
+                  Password Recovery
+                </span>
+              </div>
+            )}
 
             {/* Error & Success Alerts */}
             {error && (
@@ -208,10 +303,27 @@ function CustomerAuthContent() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-[#E9A62B]" />
-                    <span>Password</span>
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-[#E9A62B]" />
+                      <span>Password</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode("forgot");
+                        setForgotStep(1);
+                        setError(null);
+                        setSuccessMsg(null);
+                        if (identifier.includes("@")) {
+                          setForgotEmail(identifier);
+                        }
+                      }}
+                      className="text-[11px] font-semibold text-[#8B5E14] hover:text-[#2F5D3A] hover:underline"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
                   <input
                     type="password"
                     placeholder="Enter your password"
@@ -241,7 +353,7 @@ function CustomerAuthContent() {
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 text-[#E9A62B]" />
-                    <span>Choose Username</span>
+                    <span>Choose Username *</span>
                   </label>
                   <input
                     type="text"
@@ -257,7 +369,7 @@ function CustomerAuthContent() {
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 text-[#E9A62B]" />
-                    <span>Your Full Name</span>
+                    <span>Your Full Name *</span>
                   </label>
                   <input
                     type="text"
@@ -271,8 +383,23 @@ function CustomerAuthContent() {
 
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-[#E9A62B]" />
+                    <span>WhatsApp Contact Number *</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="e.g. +91 98765 43210"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E] focus:outline-none focus:ring-2 focus:ring-[#2F5D3A]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5 text-[#E9A62B]" />
-                    <span>Email Address</span>
+                    <span>Email Address *</span>
                   </label>
                   <input
                     type="email"
@@ -287,7 +414,7 @@ function CustomerAuthContent() {
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
                     <Lock className="w-3.5 h-3.5 text-[#E9A62B]" />
-                    <span>Password (min. 6 characters)</span>
+                    <span>Password (min. 6 characters) *</span>
                   </label>
                   <input
                     type="password"
@@ -306,11 +433,109 @@ function CustomerAuthContent() {
                     disabled={loading}
                     className="w-full flex items-center justify-center gap-2 py-3"
                   >
-                    <span>{loading ? "Creating Account..." : "Create Free Account"}</span>
+                    <span>{loading ? "Creating Account..." : "Create Customer Account"}</span>
                     <ArrowRight className="w-4 h-4" />
                   </PetalButton>
                 </div>
               </form>
+            )}
+
+            {/* FORGOT PASSWORD FLOW */}
+            {mode === "forgot" && (
+              <div className="space-y-4">
+                {forgotStep === 1 ? (
+                  <form onSubmit={handleSendOtp} className="space-y-4">
+                    <p className="text-xs text-[#635166] leading-relaxed">
+                      Enter the email address registered with your BRB Decors account. We will send you a 6-digit OTP to reset your password.
+                    </p>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-[#E9A62B]" />
+                        <span>Your Registered Email</span>
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="e.g. anand@gmail.com"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        required
+                        className="w-full px-4 py-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E] focus:outline-none focus:ring-2 focus:ring-[#2F5D3A]"
+                      />
+                    </div>
+
+                    <div className="pt-2">
+                      <PetalButton
+                        type="submit"
+                        disabled={loading}
+                        className="w-full flex items-center justify-center gap-2 py-3"
+                      >
+                        <span>{loading ? "Sending OTP Code..." : "Send Verification OTP"}</span>
+                        <KeyRound className="w-4 h-4" />
+                      </PetalButton>
+                    </div>
+                  </form>
+                ) : (
+                  <form onSubmit={handleResetPassword} className="space-y-3.5">
+                    <p className="text-xs text-[#635166] leading-relaxed">
+                      Enter the 6-digit OTP code sent to <strong>{forgotEmail}</strong> and your desired new password.
+                    </p>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
+                        <KeyRound className="w-3.5 h-3.5 text-[#E9A62B]" />
+                        <span>6-Digit Verification OTP</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 123456"
+                        maxLength={6}
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        required
+                        className="w-full px-4 py-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-center font-mono text-base font-bold tracking-widest text-[#2B1A2E] focus:outline-none focus:ring-2 focus:ring-[#2F5D3A]"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5 text-[#E9A62B]" />
+                        <span>New Password (min. 6 characters)</span>
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="Enter your new secure password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        className="w-full px-4 py-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E] focus:outline-none focus:ring-2 focus:ring-[#2F5D3A]"
+                      />
+                    </div>
+
+                    <div className="pt-2 space-y-2">
+                      <PetalButton
+                        type="submit"
+                        disabled={loading}
+                        className="w-full flex items-center justify-center gap-2 py-3"
+                      >
+                        <span>{loading ? "Updating Password..." : "Change & Save Password"}</span>
+                        <CheckCircle className="w-4 h-4" />
+                      </PetalButton>
+
+                      <button
+                        type="button"
+                        onClick={handleSendOtp}
+                        disabled={loading}
+                        className="w-full py-2 text-[11px] text-[#8B5E14] hover:text-[#2F5D3A] flex items-center justify-center gap-1 font-semibold"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        <span>Didn&apos;t receive OTP? Resend code</span>
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
             )}
           </>
         )}

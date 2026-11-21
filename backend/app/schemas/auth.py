@@ -17,6 +17,17 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     full_name: Optional[str] = None
+    phone: Optional[str] = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp: str
+    new_password: str
 
 
 class AdminCredentialsUpdate(BaseModel):
@@ -33,6 +44,7 @@ class Token(BaseModel):
     user_username: Optional[str] = None
     user_role: str
     user_name: Optional[str] = None
+    user_phone: Optional[str] = None
 
 
 class TokenData(BaseModel):
@@ -48,5 +60,6 @@ class UserOut(BaseModel):
     username: Optional[str] = None
     email: str
     full_name: Optional[str] = None
+    phone: Optional[str] = None
     role: str
     is_active: bool

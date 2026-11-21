@@ -587,8 +587,9 @@ Please reply here to confirm your booking or if you need any customizations! ✨
                   <thead className="bg-[#FAF3E7] border-b border-[#E8DAC8] text-[#635166] uppercase text-[10px] tracking-wider font-bold">
                     <tr>
                       <th className="py-3 px-4">Booking ID</th>
+                      <th className="py-3 px-4">Booking Time</th>
                       <th className="py-3 px-4">Client</th>
-                      <th className="py-3 px-4">Date & City</th>
+                      <th className="py-3 px-4">Function Date & City</th>
                       <th className="py-3 px-4">Occasion & Plates</th>
                       <th className="py-3 px-4">Service</th>
                       <th className="py-3 px-4">Status</th>
@@ -599,7 +600,15 @@ Please reply here to confirm your booking or if you need any customizations! ✨
                   <tbody className="divide-y divide-[#E8DAC8]/60">
                     {filteredBookings.map((b) => (
                       <tr key={b.id} className="hover:bg-[#FAF3E7]/40 transition-colors">
-                        <td className="py-3.5 px-4 font-mono font-bold text-[#2B1A2E]">{b.id}</td>
+                        <td className="py-3.5 px-4 font-mono font-bold text-[#2B1A2E] whitespace-nowrap">{b.id}</td>
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <span className="font-medium text-[#2B1A2E] text-xs block">
+                            {new Date(b.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                          </span>
+                          <span className="text-[#8B5E14] font-bold text-[11px] block mt-0.5">
+                            🕒 {new Date(b.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                          </span>
+                        </td>
                         <td className="py-3.5 px-4">
                           <span className="font-semibold text-[#2B1A2E] block">{b.customer_name}</span>
                           <span className="text-[#635166] text-[11px]">{b.phone}</span>
@@ -1343,10 +1352,25 @@ Please reply here to confirm your booking or if you need any customizations! ✨
           <div className="bg-[#FFFDF9] rounded-3xl border-2 border-[#E8DAC8] max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex items-start justify-between border-b border-[#E8DAC8] pb-4">
               <div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#E9A62B]">
-                  {selectedBooking.id}
-                </span>
-                <h2 className="font-serif text-2xl font-bold text-[#2B1A2E]">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#E9A62B] bg-[#FAF3E7] px-2.5 py-0.5 rounded-full border border-[#E8DAC8]">
+                    {selectedBooking.id}
+                  </span>
+                  <span className="text-[11px] text-[#8B5E14] font-semibold flex items-center gap-1">
+                    <span>🕒 Booked on:</span>
+                    <span>
+                      {new Date(selectedBooking.created_at).toLocaleString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}
+                    </span>
+                  </span>
+                </div>
+                <h2 className="font-serif text-2xl font-bold text-[#2B1A2E] mt-1">
                   {selectedBooking.customer_name}
                 </h2>
                 <span className="text-xs text-[#635166]">{selectedBooking.phone} • {selectedBooking.email || "No email"}</span>

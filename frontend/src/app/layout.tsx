@@ -59,10 +59,9 @@ const jsonLd = {
   email: SITE_CONFIG.email,
   address: {
     "@type": "PostalAddress",
-    streetAddress: "Anna Nagar",
-    addressLocality: "Chennai",
+    streetAddress: "Coimbatore",
+    addressLocality: "Coimbatore",
     addressRegion: "Tamil Nadu",
-    postalCode: "600040",
     addressCountry: "IN",
   },
   priceRange: "₹₹",

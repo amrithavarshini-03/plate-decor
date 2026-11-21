@@ -10,10 +10,13 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), unique=True, index=True, nullable=True)
     full_name = Column(String(255), nullable=True)
+    phone = Column(String(50), nullable=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     role = Column(String(50), default="customer", nullable=False)  # admin | customer
     is_active = Column(Boolean, default=True)
+    otp_code = Column(String(10), nullable=True)
+    otp_expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 

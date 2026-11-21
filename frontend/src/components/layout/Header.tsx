@@ -37,7 +37,6 @@ export function Header() {
     { href: "/", label: t.nav.home },
     { href: "/gallery", label: t.nav.gallery },
     { href: "/plan", label: t.nav.planner },
-    { href: "/my-orders", label: "My Orders" },
     { href: "/shop", label: t.nav.shop },
     { href: "/packages", label: t.nav.packages },
     { href: "/about", label: t.nav.about },

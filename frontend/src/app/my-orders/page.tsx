@@ -20,11 +20,14 @@ import {
   X,
   Phone,
   Layers,
+  Lock,
+  User,
 } from "lucide-react";
 import { api, ApiBooking, getCustomerUser, getCustomerOrderIds } from "@/services/api";
 import { SITE_CONFIG } from "@/config/site.config";
 
 export default function MyOrdersPage() {
+  const [customerUser, setCustomerUser] = useState<any>(null);
   const [orders, setOrders] = useState<ApiBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchPhone, setSearchPhone] = useState("");
@@ -63,7 +66,13 @@ export default function MyOrdersPage() {
   };
 
   useEffect(() => {
-    loadOrders();
+    const user = getCustomerUser();
+    setCustomerUser(user);
+    if (user) {
+      loadOrders(user.phone);
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const handleSearchByPhone = async (e: React.FormEvent) => {
@@ -243,6 +252,39 @@ export default function MyOrdersPage() {
           <div className="w-10 h-10 border-3 border-[#2F5D3A] border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs text-[#635166] font-medium">Retrieving your ceremonial orders...</p>
         </div>
+      ) : !customerUser ? (
+        <div className="py-14 px-6 sm:px-12 text-center rounded-3xl bg-[#FFFDF9] border-2 border-[#E4C580] space-y-6 max-w-lg mx-auto shadow-xl animate-in zoom-in-95">
+          <div className="w-20 h-20 rounded-full bg-[#2F5D3A] text-white flex items-center justify-center mx-auto shadow-md">
+            <Lock className="w-9 h-9 text-[#E9A62B]" />
+          </div>
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#2F5D3A] block">
+              Customer Sign-In Required
+            </span>
+            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#2B1A2E]">
+              Sign In to View Your Orders
+            </h2>
+            <p className="text-xs text-[#635166] leading-relaxed">
+              Please sign in to your BRB Decors account to view your ceremonial plate orders, track live formal quotes from our decorators, and manage bookings.
+            </p>
+          </div>
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/login?redirect=/my-orders&mode=login"
+              className="w-full sm:w-auto px-7 py-3 rounded-full bg-[#2F5D3A] text-white text-xs font-bold hover:bg-[#214229] transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              <User className="w-4 h-4 text-[#E9A62B]" />
+              <span>Sign In to Account</span>
+            </Link>
+            <Link
+              href="/login?redirect=/my-orders&mode=register"
+              className="w-full sm:w-auto px-7 py-3 rounded-full bg-[#FAF3E7] text-[#2B1A2E] text-xs font-bold hover:bg-[#E8DAC8] border border-[#E8DAC8] transition-all flex items-center justify-center gap-2"
+            >
+              <span>Create New Account</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
       ) : filteredOrders.length === 0 ? (
         <div className="py-16 px-6 text-center rounded-3xl bg-[#FFFDF9] border border-[#E8DAC8] space-y-6 max-w-lg mx-auto shadow-xs">
           <div className="w-16 h-16 rounded-full bg-[#FAF3E7] border-2 border-[#E4C580] flex items-center justify-center mx-auto text-[#2F5D3A]">
@@ -253,7 +295,7 @@ export default function MyOrdersPage() {
               No Ceremonial Orders Found
             </h3>
             <p className="text-xs text-[#635166] leading-relaxed">
-              You haven&apos;t placed any plate decoration requests yet. Use our interactive Plate Planner to create your custom thaalam arrangement.
+              You haven&apos;t placed any plate decoration requests yet with account <strong>{customerUser.email}</strong>. Use our interactive Plate Planner to create your custom thaalam arrangement.
             </p>
           </div>
           <Link

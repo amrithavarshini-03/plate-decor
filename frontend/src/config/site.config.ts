@@ -12,8 +12,8 @@ export const SITE_CONFIG = {
   email: "vanakkam@brbdecors.com",
   instagramHandle: "@brb_decors",
   instagramUrl: "https://instagram.com/brb_decors",
-  location: "Chennai & across Tamil Nadu",
-  address: "Anna Nagar, Chennai, Tamil Nadu - 600040",
+  location: "Coimbatore & across Tamil Nadu",
+  address: "Coimbatore",
   hours: "Monday - Sunday: 9:00 AM - 8:00 PM (IST)",
   apiUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
   bookingDepositDefault: 2000, // in INR

@@ -268,13 +268,14 @@ export const api = {
       username: data.user_username || identifier,
       email: data.user_email,
       full_name: data.user_name || data.user_username,
+      phone: data.user_phone,
       role: data.user_role,
     };
     setCustomerToken(data.access_token, user);
     return { token: data.access_token, user };
   },
 
-  async customerRegister(data: { username: string; email: string; password: string; full_name?: string }) {
+  async customerRegister(data: { username: string; email: string; password: string; full_name?: string; phone?: string }) {
     const res = await fetch(`${BASE_URL}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -289,10 +290,37 @@ export const api = {
       username: resData.user_username || data.username,
       email: resData.user_email,
       full_name: resData.user_name || data.full_name,
+      phone: resData.user_phone || data.phone,
       role: resData.user_role,
     };
     setCustomerToken(resData.access_token, user);
     return { token: resData.access_token, user };
+  },
+
+  async forgotPassword(email: string): Promise<{ status: string; message: string; dev_otp?: string }> {
+    const res = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Failed to send reset code");
+    }
+    return res.json();
+  },
+
+  async resetPassword(data: { email: string; otp: string; new_password: string }): Promise<{ status: string; message: string }> {
+    const res = await fetch(`${BASE_URL}/api/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Password reset failed");
+    }
+    return res.json();
   },
 
   async updateAdminCredentials(data: { username?: string; password?: string; email?: string }) {

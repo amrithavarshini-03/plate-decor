@@ -1,10 +1,19 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
+import random
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.models.entities import User
-from app.schemas.auth import LoginRequest, RegisterRequest, AdminCredentialsUpdate, Token, UserOut
+from app.schemas.auth import (
+    LoginRequest,
+    RegisterRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    AdminCredentialsUpdate,
+    Token,
+    UserOut,
+)
 from app.utils.security import (
     verify_password,
     get_password_hash,
@@ -12,6 +21,7 @@ from app.utils.security import (
     get_current_admin,
     get_current_user,
 )
+from app.services.notification import get_notification_service
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -61,6 +71,7 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
         user_username=user.username,
         user_role=user.role,
         user_name=user.full_name or user.username or user.email,
+        user_phone=user.phone,
     )
 
 
@@ -87,6 +98,7 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
         username=clean_username,
         email=clean_email,
         full_name=req.full_name.strip() if req.full_name else clean_username,
+        phone=req.phone.strip() if req.phone else None,
         password_hash=get_password_hash(req.password),
         role="customer",
         is_active=True,
@@ -109,7 +121,75 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
         user_username=new_user.username,
         user_role=new_user.role,
         user_name=new_user.full_name,
+        user_phone=new_user.phone,
     )
+
+
+@router.post("/forgot-password")
+def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    clean_email = req.email.strip().lower()
+    user = db.query(User).filter(User.email.ilike(clean_email)).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No registered account found with this email address.",
+        )
+
+    otp = f"{random.randint(100000, 999999)}"
+    user.otp_code = otp
+    user.otp_expires_at = datetime.utcnow() + timedelta(minutes=10)
+    db.commit()
+
+    notifier = get_notification_service()
+    notifier.send_password_reset_otp(clean_email, otp)
+
+    return {
+        "status": "success",
+        "message": f"6-digit verification code sent to {clean_email}.",
+        "email": clean_email,
+        "dev_otp": otp if settings.DEBUG else None,
+    }
+
+
+@router.post("/reset-password")
+def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
+    clean_email = req.email.strip().lower()
+    user = db.query(User).filter(User.email.ilike(clean_email)).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Account not found",
+        )
+    if not user.otp_code or not user.otp_expires_at:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No OTP request active for this account. Please request a new code.",
+        )
+    if user.otp_expires_at < datetime.utcnow():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This OTP has expired. Please request a new one.",
+        )
+    if user.otp_code.strip() != req.otp.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect OTP code. Please enter the 6-digit code received on your email.",
+        )
+    if len(req.new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 6 characters long.",
+        )
+
+    user.password_hash = get_password_hash(req.new_password)
+    user.otp_code = None
+    user.otp_expires_at = None
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": "Password changed successfully! You can now sign in with your new password.",
+    }
 
 
 @router.patch("/admin/credentials", response_model=UserOut)
