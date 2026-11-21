@@ -27,6 +27,12 @@ class BaseNotificationService(ABC):
     def send_password_reset_otp(self, email: str, otp: str) -> bool:
         pass
 
+    def send_sms_otp(self, phone: str, otp: str) -> bool:
+        return self.send_password_reset_otp(phone, otp)
+
+    def send_whatsapp_otp(self, phone: str, otp: str) -> bool:
+        return self.send_password_reset_otp(phone, otp)
+
 
 class ConsoleNotificationService(BaseNotificationService):
     """Fallback / development logger notification service."""
@@ -58,6 +64,18 @@ class ConsoleNotificationService(BaseNotificationService):
     def send_password_reset_otp(self, email: str, otp: str) -> bool:
         logger.info(
             f"🔑 [PASSWORD RESET OTP] Target: {email} | OTP Code: {otp} (Valid for 10 minutes)"
+        )
+        return True
+
+    def send_sms_otp(self, phone: str, otp: str) -> bool:
+        logger.info(
+            f"📱 [SMS GATEWAY DISPATCH] To: {phone} | Code: {otp} | Message: Your BRB Decors 6-digit OTP code is {otp}."
+        )
+        return True
+
+    def send_whatsapp_otp(self, phone: str, otp: str) -> bool:
+        logger.info(
+            f"💬 [WHATSAPP DISPATCH] To: {phone} | Code: {otp} | Message: 🌸 BRB Decors: Your verification OTP is {otp}"
         )
         return True
 
@@ -317,6 +335,14 @@ class CompositeNotificationService(BaseNotificationService):
 
     def send_password_reset_otp(self, email: str, otp: str) -> bool:
         results = [s.send_password_reset_otp(email, otp) for s in self.services]
+        return any(results)
+
+    def send_sms_otp(self, phone: str, otp: str) -> bool:
+        results = [s.send_sms_otp(phone, otp) for s in self.services]
+        return any(results)
+
+    def send_whatsapp_otp(self, phone: str, otp: str) -> bool:
+        results = [s.send_whatsapp_otp(phone, otp) for s in self.services]
         return any(results)
 
 

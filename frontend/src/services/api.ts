@@ -465,7 +465,10 @@ export const api = {
     return { token: resData.access_token, user };
   },
 
-  async forgotPassword(identifier: string): Promise<{ status: string; message: string; identifier?: string; email?: string; phone?: string; whatsapp_url?: string; dev_otp?: string }> {
+  async forgotPassword(
+    identifier: string,
+    channel: "sms" | "whatsapp" = "sms"
+  ): Promise<{ status: string; message: string; identifier?: string; email?: string; phone?: string; channel?: string; whatsapp_url?: string }> {
     const cleanIdent = identifier.trim();
     const cleanDigits = cleanIdent.replace(/\D/g, "");
     const last10 = cleanDigits.slice(-10);
@@ -474,11 +477,12 @@ export const api = {
       ? cleanIdent
       : `user_${last10 || cleanDigits || "customer"}@brbdecors.com`;
 
-    // Send identifier, phone AND email so both old and new backend schemas always accept it without 422!
+    // Send identifier, phone, email AND channel so both old and new backend schemas always accept it without 422!
     const payload: any = {
       identifier: cleanIdent,
       phone: cleanIdent,
       email: fallbackEmail,
+      channel,
     };
 
     try {
@@ -489,12 +493,26 @@ export const api = {
       });
       if (res.ok) {
         const data = await res.json();
-        if (!data.whatsapp_url && (last10 || cleanDigits)) {
-          const waNum = last10 ? `91${last10}` : cleanDigits;
-          const code = data.dev_otp || "";
-          data.whatsapp_url = `https://wa.me/${waNum}?text=🌸+BRB+Decors:+Your+verification+OTP+code+is+*${code}*`;
+        const waNum = last10 ? `91${last10}` : cleanDigits;
+        let finalWaUrl: string | undefined = undefined;
+        if (channel === "whatsapp") {
+          finalWaUrl = data.whatsapp_url;
+          if (!finalWaUrl && waNum) {
+            const code = data.dev_otp || "";
+            finalWaUrl = `https://wa.me/${waNum}?text=🌸+BRB+Decors:+Your+verification+OTP+code+is+*${code}*.+Valid+for+10+minutes.`;
+          }
         }
-        return data;
+        return {
+          status: "success",
+          message:
+            channel === "whatsapp"
+              ? `6-digit verification code sent to ${cleanIdent} via WhatsApp.`
+              : `6-digit verification code sent to ${cleanIdent} via normal SMS message.`,
+          identifier: cleanIdent,
+          phone: cleanIdent,
+          channel,
+          whatsapp_url: finalWaUrl,
+        };
       }
       const err = await res.json().catch(() => ({}));
       const local = getPersistentCustomer(cleanIdent);
@@ -507,12 +525,17 @@ export const api = {
       if (local || isPhone) {
         return {
           status: "success",
-          message: `6-digit verification code generated for ${targetPhone}.`,
+          message:
+            channel === "whatsapp"
+              ? `6-digit verification code sent to ${targetPhone} via WhatsApp.`
+              : `6-digit verification code sent to ${targetPhone} via normal SMS message.`,
           identifier: targetPhone,
           phone: targetPhone,
-          email: local?.email || fallbackEmail,
-          whatsapp_url: `https://wa.me/${waNumber}?text=🌸+BRB+Decors:+Your+verification+OTP+code+is+*${otp}*`,
-          dev_otp: otp,
+          channel,
+          whatsapp_url:
+            channel === "whatsapp"
+              ? `https://wa.me/${waNumber}?text=🌸+BRB+Decors:+Your+verification+OTP+code+is+*${otp}*.+Valid+for+10+minutes.`
+              : undefined,
         };
       }
       throw new Error(extractErrorMessage(err, "No registered account found with this mobile number."));
@@ -527,12 +550,17 @@ export const api = {
       if (local || isPhone) {
         return {
           status: "success",
-          message: `6-digit verification code generated for ${targetPhone}.`,
+          message:
+            channel === "whatsapp"
+              ? `6-digit verification code sent to ${targetPhone} via WhatsApp.`
+              : `6-digit verification code sent to ${targetPhone} via normal SMS message.`,
           identifier: targetPhone,
           phone: targetPhone,
-          email: local?.email || fallbackEmail,
-          whatsapp_url: `https://wa.me/${waNumber}?text=🌸+BRB+Decors:+Your+verification+OTP+code+is+*${otp}*`,
-          dev_otp: otp,
+          channel,
+          whatsapp_url:
+            channel === "whatsapp"
+              ? `https://wa.me/${waNumber}?text=🌸+BRB+Decors:+Your+verification+OTP+code+is+*${otp}*.+Valid+for+10+minutes.`
+              : undefined,
         };
       }
       throw new Error(e.message || "Failed to send reset code. Please check your mobile number.");

@@ -17,6 +17,7 @@ import {
   KeyRound,
   RefreshCw,
   MessageCircle,
+  MessageSquare,
 } from "lucide-react";
 import {
   api,
@@ -47,6 +48,7 @@ function CustomerAuthContent() {
 
   // Forgot password states
   const [forgotIdentifier, setForgotIdentifier] = useState("");
+  const [selectedChannel, setSelectedChannel] = useState<"sms" | "whatsapp">("sms");
   const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -101,26 +103,30 @@ function CustomerAuthContent() {
     }
   };
 
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendOtp = async (channel: "sms" | "whatsapp" = "sms") => {
     if (!forgotIdentifier.trim()) {
       setError("Please enter your registered mobile number.");
       return;
     }
     setError(null);
     setLoading(true);
+    setOtp(""); // NEVER show or auto-fill OTP on screen
+    setSelectedChannel(channel);
+
     try {
-      const res = await api.forgotPassword(forgotIdentifier.trim());
+      const res = await api.forgotPassword(forgotIdentifier.trim(), channel);
       setForgotStep(2);
       if (res.whatsapp_url) {
         setWhatsappUrl(res.whatsapp_url);
-      }
-      if (res.dev_otp) {
-        setOtp(res.dev_otp);
-        setSuccessMsg(`Verification code generated: ${res.dev_otp} (Auto-filled below). Enter your new password to reset.`);
       } else {
-        setSuccessMsg(res.message || `6-digit verification code sent to ${forgotIdentifier}. Please check your phone.`);
+        setWhatsappUrl(null);
       }
+      setSuccessMsg(
+        res.message ||
+          (channel === "whatsapp"
+            ? `6-digit verification code sent to ${forgotIdentifier.trim()} on WhatsApp.`
+            : `6-digit verification code sent to ${forgotIdentifier.trim()} via normal SMS message.`)
+      );
     } catch (err: any) {
       const errMsg = err.message || "";
       if (errMsg.toLowerCase().includes("no registered account found")) {
@@ -388,9 +394,15 @@ function CustomerAuthContent() {
             {mode === "forgot" && (
               <div className="space-y-4">
                 {forgotStep === 1 ? (
-                  <form onSubmit={handleSendOtp} className="space-y-4">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSendOtp("sms");
+                    }}
+                    className="space-y-4"
+                  >
                     <p className="text-xs text-[#635166] leading-relaxed">
-                      Enter your registered <strong>Mobile Number</strong>. We will send you a 6-digit OTP verification code via message.
+                      Enter your registered <strong>Mobile Number</strong>. We will send a 6-digit OTP verification code to your phone.
                     </p>
 
                     <div className="space-y-1">
@@ -408,15 +420,27 @@ function CustomerAuthContent() {
                       />
                     </div>
 
-                    <div className="pt-2">
+                    <div className="pt-2 space-y-2.5">
+                      {/* Default: Normal SMS */}
                       <PetalButton
                         type="submit"
                         disabled={loading}
-                        className="w-full flex items-center justify-center gap-2 py-3"
+                        className="w-full flex items-center justify-center gap-2 py-3 shadow-sm"
                       >
-                        <span>{loading ? "Sending Mobile OTP..." : "Send Verification OTP via Message"}</span>
-                        <KeyRound className="w-4 h-4" />
+                        <MessageSquare className="w-4 h-4 text-[#FFFDF9]" />
+                        <span>{loading && selectedChannel === "sms" ? "Sending SMS..." : "Send OTP via SMS (Normal Message)"}</span>
                       </PetalButton>
+
+                      {/* On request: WhatsApp */}
+                      <button
+                        type="button"
+                        disabled={loading}
+                        onClick={() => handleSendOtp("whatsapp")}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-[#25D366]/40 bg-[#25D366]/10 text-xs font-bold text-[#128C7E] hover:bg-[#25D366]/20 transition-all shadow-2xs"
+                      >
+                        <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                        <span>{loading && selectedChannel === "whatsapp" ? "Sending WhatsApp..." : "Send OTP via WhatsApp"}</span>
+                      </button>
                     </div>
 
                     <div className="text-center pt-2 border-t border-[#E8DAC8]/60">
@@ -434,34 +458,31 @@ function CustomerAuthContent() {
                     </div>
                   </form>
                 ) : (
-                  <form onSubmit={handleResetPassword} className="space-y-3.5">
-                    <p className="text-xs text-[#635166] leading-relaxed">
-                      Enter the 6-digit OTP code sent to your mobile <strong>{forgotIdentifier}</strong> and your desired new password.
-                    </p>
-
-                    {otp && (
-                      <div className="p-3.5 rounded-2xl bg-[#FFFDF9] border-2 border-[#E4C580] text-center space-y-1 shadow-sm">
-                        <span className="text-[10px] font-bold uppercase text-[#8B5E14] tracking-wider block">
-                          Verification Code Generated
+                  <form onSubmit={handleResetPassword} className="space-y-4">
+                    <div className="p-3.5 rounded-xl bg-[#FAF3E7] border border-[#E8DAC8] text-xs text-[#635166] leading-relaxed">
+                      {selectedChannel === "whatsapp" ? (
+                        <span>
+                          A 6-digit OTP code has been dispatched to <strong>{forgotIdentifier}</strong> on <strong>WhatsApp</strong>.
                         </span>
-                        <div className="text-3xl font-mono font-bold tracking-widest text-[#2F5D3A]">
-                          {otp}
-                        </div>
-                        <p className="text-[11px] text-[#635166]">
-                          Enter this code below to set your new password.
-                        </p>
-                      </div>
-                    )}
+                      ) : (
+                        <span>
+                          A 6-digit OTP code has been dispatched to <strong>{forgotIdentifier}</strong> via <strong>normal SMS message</strong>.
+                        </span>
+                      )}
+                      <p className="mt-1 text-[11px] text-[#8B5E14]">
+                        Please check your phone inbox and enter the 6-digit code below.
+                      </p>
+                    </div>
 
-                    {whatsappUrl && (
+                    {selectedChannel === "whatsapp" && whatsappUrl && (
                       <a
                         href={whatsappUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/30 text-xs font-bold text-[#128C7E] hover:bg-[#25D366]/20 transition-colors shadow-2xs"
+                        className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#25D366]/15 border border-[#25D366]/40 text-xs font-bold text-[#128C7E] hover:bg-[#25D366]/25 transition-colors shadow-2xs"
                       >
                         <MessageCircle className="w-4 h-4 text-[#25D366]" />
-                        <span>Open WhatsApp with Code</span>
+                        <span>Open WhatsApp to View Message</span>
                       </a>
                     )}
 
@@ -472,12 +493,12 @@ function CustomerAuthContent() {
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. 123456"
+                        placeholder="Enter 6-digit code received"
                         maxLength={6}
                         value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                         required
-                        className="w-full px-4 py-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-center font-mono text-base font-bold tracking-widest text-[#2B1A2E] focus:outline-none focus:ring-2 focus:ring-[#2F5D3A]"
+                        className="w-full px-4 py-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-center font-mono text-base font-bold tracking-widest text-[#2B1A2E] placeholder:text-xs placeholder:font-normal placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-[#2F5D3A]"
                       />
                     </div>
 
@@ -497,7 +518,7 @@ function CustomerAuthContent() {
                       />
                     </div>
 
-                    <div className="pt-2 space-y-2">
+                    <div className="pt-2 space-y-2.5">
                       <PetalButton
                         type="submit"
                         disabled={loading}
@@ -507,15 +528,27 @@ function CustomerAuthContent() {
                         <CheckCircle className="w-4 h-4" />
                       </PetalButton>
 
-                      <button
-                        type="button"
-                        onClick={handleSendOtp}
-                        disabled={loading}
-                        className="w-full py-2 text-[11px] text-[#8B5E14] hover:text-[#2F5D3A] flex items-center justify-center gap-1 font-semibold"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                        <span>Didn&apos;t receive OTP? Resend code</span>
-                      </button>
+                      {/* Resend actions */}
+                      <div className="flex items-center justify-between pt-1 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => handleSendOtp("sms")}
+                          disabled={loading}
+                          className="text-[#8B5E14] hover:text-[#2F5D3A] flex items-center gap-1 font-semibold hover:underline"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          <span>Resend via SMS</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSendOtp("whatsapp")}
+                          disabled={loading}
+                          className="text-[#128C7E] hover:text-[#2F5D3A] flex items-center gap-1 font-semibold hover:underline"
+                        >
+                          <MessageCircle className="w-3 h-3 text-[#25D366]" />
+                          <span>Send via WhatsApp instead</span>
+                        </button>
+                      </div>
                     </div>
                   </form>
                 )}

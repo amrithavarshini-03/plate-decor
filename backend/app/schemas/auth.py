@@ -25,6 +25,7 @@ class ForgotPasswordRequest(BaseModel):
     identifier: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
+    channel: Optional[str] = "sms"
 
 
 class ResetPasswordRequest(BaseModel):

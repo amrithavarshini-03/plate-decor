@@ -197,14 +197,14 @@ def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
     if not ident:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Please provide your registered mobile number or email address.",
+            detail="Please provide your registered mobile number.",
         )
 
     user = find_user_by_identifier(ident, db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No registered account found with this mobile number or email address.",
+            detail="No registered account found with this mobile number.",
         )
 
     otp = f"{random.randint(100000, 999999)}"
@@ -212,28 +212,29 @@ def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
     user.otp_expires_at = datetime.utcnow() + timedelta(minutes=10)
     db.commit()
 
+    channel = (req.channel or "sms").lower()
+    target_phone = user.phone or ident
+    phone_digits = "".join(c for c in target_phone if c.isdigit())
+    if len(phone_digits) == 10:
+        phone_digits = f"91{phone_digits}"
+
     notifier = get_notification_service()
-    if user.email:
-        notifier.send_password_reset_otp(user.email, otp)
-    if user.phone:
-        notifier.send_password_reset_otp(user.phone, otp)
-
-    is_mobile_req = "@" not in ident and any(c.isdigit() for c in ident)
-    recipient_label = user.phone if is_mobile_req and user.phone else user.email
-
-    phone_clean = user.phone or ""
-    clean_digits = "".join(c for c in phone_clean if c.isdigit())
-    if len(clean_digits) == 10:
-        clean_digits = f"91{clean_digits}"
+    if channel == "whatsapp":
+        notifier.send_whatsapp_otp(target_phone, otp)
+        wa_url = f"https://wa.me/{phone_digits}?text=🌸+BRB+Decors:+Your+verification+OTP+code+is+*{otp}*.+Valid+for+10+minutes." if phone_digits else None
+        msg = f"6-digit verification code sent to {target_phone} via WhatsApp."
+    else:
+        notifier.send_sms_otp(target_phone, otp)
+        wa_url = None
+        msg = f"6-digit verification code sent to {target_phone} via normal SMS message."
 
     return {
         "status": "success",
-        "message": f"6-digit verification code generated for {recipient_label}.",
-        "identifier": recipient_label,
-        "email": user.email,
+        "message": msg,
+        "identifier": target_phone,
         "phone": user.phone,
-        "whatsapp_url": f"https://wa.me/{clean_digits}?text=🌸+BRB+Decors:+Your+verification+OTP+code+is+*{otp}*" if clean_digits else None,
-        "dev_otp": otp,
+        "channel": channel,
+        "whatsapp_url": wa_url,
     }
 
 
