@@ -180,8 +180,67 @@ class WhatsAppCloudNotificationService(BaseNotificationService):
     def send_status_update(self, booking_data: dict, new_status: str) -> bool:
         return True
 
-    def send_password_reset_otp(self, email: str, otp: str) -> bool:
+    def send_password_reset_otp(self, recipient: str, otp: str) -> bool:
+        if not self.token or not self.phone_number_id or not recipient:
+            return False
+        digits = "".join(c for c in recipient if c.isdigit())
+        if len(digits) < 10:
+            return False
+        if len(digits) == 10:
+            digits = "91" + digits
+        try:
+            url = f"https://graph.facebook.com/v18.0/{self.phone_number_id}/messages"
+            headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
+            payload = {
+                "messaging_product": "whatsapp",
+                "to": digits,
+                "type": "text",
+                "text": {
+                    "body": (
+                        f"🌸 Vanakkam from BRB Decors!\n\n"
+                        f"Your 6-digit password verification code is: *{otp}*\n\n"
+                        f"This code expires in 10 minutes. Please enter this code on the website to reset your password."
+                    )
+                },
+            }
+            with httpx.Client(timeout=5.0) as client:
+                res = client.post(url, headers=headers, json=payload)
+                return res.status_code in [200, 201]
+        except Exception as e:
+            logger.warning(f"Failed to send WhatsApp OTP: {e}")
+            return False
+
+
+class Fast2SMSNotificationService(BaseNotificationService):
+    """Instant Indian mobile SMS gateway (fast2sms.com)."""
+
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+
+    def send_booking_confirmation(self, booking_data: dict) -> bool:
         return True
+
+    def send_quote_notification(self, booking_data: dict, amount: float) -> bool:
+        return True
+
+    def send_status_update(self, booking_data: dict, new_status: str) -> bool:
+        return True
+
+    def send_password_reset_otp(self, recipient: str, otp: str) -> bool:
+        if not self.api_key or not recipient:
+            return False
+        digits = "".join(c for c in recipient if c.isdigit())
+        if len(digits) < 10:
+            return False
+        digits = digits[-10:]
+        try:
+            url = f"https://www.fast2sms.com/dev/bulkV2?authorization={self.api_key}&route=otp&variables_values={otp}&numbers={digits}"
+            with httpx.Client(timeout=5.0) as client:
+                res = client.get(url)
+                return res.status_code == 200
+        except Exception as e:
+            logger.warning(f"Failed to send Fast2SMS OTP: {e}")
+            return False
 
 
 class SMTPNotificationService(BaseNotificationService):
@@ -290,5 +349,8 @@ def get_notification_service() -> BaseNotificationService:
                 phone_number_id=settings.WHATSAPP_PHONE_NUMBER_ID,
             )
         )
+
+    if settings.FAST2SMS_API_KEY:
+        providers.append(Fast2SMSNotificationService(api_key=settings.FAST2SMS_API_KEY))
 
     return CompositeNotificationService(providers)

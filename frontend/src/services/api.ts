@@ -301,11 +301,11 @@ export const api = {
     return { token: resData.access_token, user };
   },
 
-  async forgotPassword(email: string): Promise<{ status: string; message: string; dev_otp?: string }> {
+  async forgotPassword(identifier: string): Promise<{ status: string; message: string; identifier?: string; email?: string; phone?: string; whatsapp_url?: string; dev_otp?: string }> {
     const res = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ identifier, email: identifier, phone: identifier }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -314,11 +314,15 @@ export const api = {
     return res.json();
   },
 
-  async resetPassword(data: { email: string; otp: string; new_password: string }): Promise<{ status: string; message: string }> {
+  async resetPassword(data: { identifier?: string; email?: string; phone?: string; otp: string; new_password: string }): Promise<{ status: string; message: string }> {
+    const payload = {
+      ...data,
+      identifier: data.identifier || data.email || data.phone,
+    };
     const res = await fetch(`${BASE_URL}/api/auth/reset-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));

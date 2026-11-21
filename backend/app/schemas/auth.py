@@ -21,11 +21,15 @@ class RegisterRequest(BaseModel):
 
 
 class ForgotPasswordRequest(BaseModel):
-    email: EmailStr
+    identifier: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
 
 
 class ResetPasswordRequest(BaseModel):
-    email: EmailStr
+    identifier: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
     otp: str
     new_password: str
 

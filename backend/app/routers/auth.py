@@ -134,14 +134,39 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     )
 
 
+def find_user_by_identifier(ident: str, db: Session) -> Optional[User]:
+    clean = ident.strip()
+    if not clean:
+        return None
+    if "@" in clean:
+        return db.query(User).filter(User.email.ilike(clean.lower())).first()
+
+    # Digits for phone number check
+    digits = "".join(c for c in clean if c.isdigit())
+    if len(digits) >= 10:
+        last_10 = digits[-10:]
+        user = db.query(User).filter(User.phone.like(f"%{last_10}%")).first()
+        if user:
+            return user
+
+    # Fallback to username
+    return db.query(User).filter(User.username.ilike(clean)).first()
+
+
 @router.post("/forgot-password")
 def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
-    clean_email = req.email.strip().lower()
-    user = db.query(User).filter(User.email.ilike(clean_email)).first()
+    ident = (req.identifier or req.phone or req.email or "").strip()
+    if not ident:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please provide your registered mobile number or email address.",
+        )
+
+    user = find_user_by_identifier(ident, db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No registered account found with this email address.",
+            detail="No registered account found with this mobile number or email address.",
         )
 
     otp = f"{random.randint(100000, 999999)}"
@@ -150,20 +175,40 @@ def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
     db.commit()
 
     notifier = get_notification_service()
-    notifier.send_password_reset_otp(clean_email, otp)
+    if user.email:
+        notifier.send_password_reset_otp(user.email, otp)
+    if user.phone:
+        notifier.send_password_reset_otp(user.phone, otp)
+
+    is_mobile_req = "@" not in ident and any(c.isdigit() for c in ident)
+    recipient_label = user.phone if is_mobile_req and user.phone else user.email
+
+    phone_clean = user.phone or ""
+    clean_digits = "".join(c for c in phone_clean if c.isdigit())
+    if len(clean_digits) == 10:
+        clean_digits = f"91{clean_digits}"
 
     return {
         "status": "success",
-        "message": f"6-digit verification code sent to {clean_email}.",
-        "email": clean_email,
+        "message": f"6-digit verification code generated for {recipient_label}.",
+        "identifier": recipient_label,
+        "email": user.email,
+        "phone": user.phone,
+        "whatsapp_url": f"https://wa.me/{clean_digits}?text=🌸+BRB+Decors:+Your+verification+OTP+code+is+*{otp}*" if clean_digits else None,
         "dev_otp": otp,
     }
 
 
 @router.post("/reset-password")
 def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
-    clean_email = req.email.strip().lower()
-    user = db.query(User).filter(User.email.ilike(clean_email)).first()
+    ident = (req.identifier or req.phone or req.email or "").strip()
+    if not ident:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Identifier is required",
+        )
+
+    user = find_user_by_identifier(ident, db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -182,7 +227,7 @@ def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
     if user.otp_code.strip() != req.otp.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect OTP code. Please enter the 6-digit code received on your email.",
+            detail="Incorrect OTP code. Please enter the 6-digit code received on your mobile or email.",
         )
     if len(req.new_password) < 6:
         raise HTTPException(

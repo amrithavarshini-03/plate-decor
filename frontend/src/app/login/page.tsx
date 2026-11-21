@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   KeyRound,
   RefreshCw,
+  MessageCircle,
 } from "lucide-react";
 import {
   api,
@@ -45,7 +46,8 @@ function CustomerAuthContent() {
   const [fullName, setFullName] = useState("");
 
   // Forgot password states
-  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotIdentifier, setForgotIdentifier] = useState("");
+  const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [forgotStep, setForgotStep] = useState<1 | 2>(1); // 1 = request OTP, 2 = verify & reset
@@ -102,27 +104,30 @@ function CustomerAuthContent() {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!forgotEmail.trim()) {
-      setError("Please enter your registered email address.");
+    if (!forgotIdentifier.trim()) {
+      setError("Please enter your registered mobile number or email.");
       return;
     }
     setError(null);
     setLoading(true);
     try {
-      const res = await api.forgotPassword(forgotEmail.trim());
+      const res = await api.forgotPassword(forgotIdentifier.trim());
       setForgotStep(2);
+      if (res.whatsapp_url) {
+        setWhatsappUrl(res.whatsapp_url);
+      }
       if (res.dev_otp) {
         setOtp(res.dev_otp);
         setSuccessMsg(`Verification code generated: ${res.dev_otp} (Auto-filled below). Enter your new password to reset.`);
       } else {
-        setSuccessMsg(res.message || `6-digit verification code sent to ${forgotEmail}. Please check your email.`);
+        setSuccessMsg(res.message || `6-digit verification code sent to ${forgotIdentifier}. Please check your phone / email.`);
       }
     } catch (err: any) {
       const errMsg = err.message || "";
       if (errMsg.toLowerCase().includes("no registered account found")) {
-        setError("No registered account found with this email address. Please click 'Create Account' to sign up first.");
+        setError("No registered account found with this mobile number or email. Please click 'Create Account' to sign up first.");
       } else {
-        setError(errMsg || "Could not send OTP. Please check the email address.");
+        setError(errMsg || "Could not send OTP. Please check the details entered.");
       }
     } finally {
       setLoading(false);
@@ -139,16 +144,19 @@ function CustomerAuthContent() {
     setLoading(true);
     try {
       const res = await api.resetPassword({
-        email: forgotEmail.trim(),
+        identifier: forgotIdentifier.trim(),
+        email: forgotIdentifier.trim(),
+        phone: forgotIdentifier.trim(),
         otp: otp.trim(),
         new_password: newPassword,
       });
       setSuccessMsg(res.message || "Password changed successfully! You can now sign in.");
       setMode("login");
-      setIdentifier(forgotEmail.trim());
+      setIdentifier(forgotIdentifier.trim());
       setForgotStep(1);
       setOtp("");
       setNewPassword("");
+      setWhatsappUrl(null);
     } catch (err: any) {
       setError(err.message || "Password reset failed. Please verify the OTP.");
     } finally {
@@ -283,8 +291,8 @@ function CustomerAuthContent() {
                         setForgotStep(1);
                         setError(null);
                         setSuccessMsg(null);
-                        if (identifier.includes("@")) {
-                          setForgotEmail(identifier);
+                        if (identifier.trim()) {
+                          setForgotIdentifier(identifier.trim());
                         }
                       }}
                       className="text-[11px] font-semibold text-[#8B5E14] hover:text-[#2F5D3A] hover:underline"
@@ -398,19 +406,19 @@ function CustomerAuthContent() {
                 {forgotStep === 1 ? (
                   <form onSubmit={handleSendOtp} className="space-y-4">
                     <p className="text-xs text-[#635166] leading-relaxed">
-                      Enter the email address registered with your BRB Decors account. We will send you a 6-digit OTP to reset your password.
+                      Enter the <strong>Mobile Number</strong> or <strong>Email Address</strong> registered with your BRB Decors account. We will send you a 6-digit OTP verification code.
                     </p>
 
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5 text-[#E9A62B]" />
-                        <span>Your Registered Email</span>
+                        <Phone className="w-3.5 h-3.5 text-[#E9A62B]" />
+                        <span>Registered Mobile Number or Email</span>
                       </label>
                       <input
-                        type="email"
-                        placeholder="e.g. anand@gmail.com"
-                        value={forgotEmail}
-                        onChange={(e) => setForgotEmail(e.target.value)}
+                        type="text"
+                        placeholder="e.g. +91 80563 43769 or your@gmail.com"
+                        value={forgotIdentifier}
+                        onChange={(e) => setForgotIdentifier(e.target.value)}
                         required
                         className="w-full px-4 py-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E] focus:outline-none focus:ring-2 focus:ring-[#2F5D3A]"
                       />
@@ -422,7 +430,7 @@ function CustomerAuthContent() {
                         disabled={loading}
                         className="w-full flex items-center justify-center gap-2 py-3"
                       >
-                        <span>{loading ? "Sending OTP Code..." : "Send Verification OTP"}</span>
+                        <span>{loading ? "Sending Mobile / Email OTP..." : "Send Verification OTP"}</span>
                         <KeyRound className="w-4 h-4" />
                       </PetalButton>
                     </div>
@@ -432,7 +440,11 @@ function CustomerAuthContent() {
                         type="button"
                         onClick={() => {
                           setMode("register");
-                          setEmail(forgotEmail);
+                          if (forgotIdentifier.includes("@")) {
+                            setEmail(forgotIdentifier);
+                          } else {
+                            setPhone(forgotIdentifier);
+                          }
                           setError(null);
                         }}
                         className="text-xs text-[#8B5E14] hover:text-[#2F5D3A] hover:underline font-medium"
@@ -444,18 +456,33 @@ function CustomerAuthContent() {
                 ) : (
                   <form onSubmit={handleResetPassword} className="space-y-3.5">
                     <p className="text-xs text-[#635166] leading-relaxed">
-                      Enter the 6-digit OTP code sent to <strong>{forgotEmail}</strong> and your desired new password.
+                      Enter the 6-digit OTP code sent to <strong>{forgotIdentifier}</strong> and your desired new password.
                     </p>
 
                     {otp && (
-                      <div className="p-3 rounded-2xl bg-[#FAF3E7] border border-[#E4C580] text-center space-y-1">
+                      <div className="p-3.5 rounded-2xl bg-[#FFFDF9] border-2 border-[#E4C580] text-center space-y-1 shadow-sm">
                         <span className="text-[10px] font-bold uppercase text-[#8B5E14] tracking-wider block">
                           Verification Code Generated
                         </span>
-                        <div className="text-2xl font-mono font-bold tracking-widest text-[#2F5D3A]">
+                        <div className="text-3xl font-mono font-bold tracking-widest text-[#2F5D3A]">
                           {otp}
                         </div>
+                        <p className="text-[11px] text-[#635166]">
+                          Enter this code below to set your new password.
+                        </p>
                       </div>
+                    )}
+
+                    {whatsappUrl && (
+                      <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/30 text-xs font-bold text-[#128C7E] hover:bg-[#25D366]/20 transition-colors shadow-2xs"
+                      >
+                        <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                        <span>Open WhatsApp with Code</span>
+                      </a>
                     )}
 
                     <div className="space-y-1">

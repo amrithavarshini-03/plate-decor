@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     RESEND_FROM_EMAIL: str = "bookings@brbdecors.com"
     WHATSAPP_API_TOKEN: str = ""
     WHATSAPP_PHONE_NUMBER_ID: str = ""
+    FAST2SMS_API_KEY: str = ""
     CLOUDINARY_URL: str = ""
 
     # SMTP Email (Gmail / Custom)
