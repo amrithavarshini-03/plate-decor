@@ -5,16 +5,17 @@ from pydantic import BaseModel, EmailStr, ConfigDict
 class LoginRequest(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
+    phone: Optional[str] = None
     identifier: Optional[str] = None
     password: str
 
     def get_login_identifier(self) -> str:
-        return (self.identifier or self.username or self.email or "").strip()
+        return (self.identifier or self.phone or self.username or self.email or "").strip()
 
 
 class RegisterRequest(BaseModel):
     username: Optional[str] = None
-    email: EmailStr
+    email: Optional[str] = None
     password: str
     full_name: Optional[str] = None
     phone: Optional[str] = None

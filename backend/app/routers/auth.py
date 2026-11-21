@@ -32,23 +32,30 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
     if not ident:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username or email is required",
+            detail="Mobile number or email is required",
         )
 
-    # Allow login by username OR email (case-insensitive)
-    user = (
-        db.query(User)
-        .filter(
-            (User.email.ilike(ident))
-            | (User.username.ilike(ident))
+    # Allow login by phone number, email or username
+    digits = "".join(c for c in ident if c.isdigit())
+    user = None
+    if len(digits) >= 10:
+        last_10 = digits[-10:]
+        user = db.query(User).filter(User.phone.like(f"%{last_10}%")).first()
+    if not user:
+        user = (
+            db.query(User)
+            .filter(
+                (User.email.ilike(ident))
+                | (User.username.ilike(ident))
+                | (User.phone.ilike(ident))
+            )
+            .first()
         )
-        .first()
-    )
 
     if not user or not verify_password(credentials.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Incorrect mobile number or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     if not user.is_active:
@@ -70,44 +77,41 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
         user_email=user.email,
         user_username=user.username,
         user_role=user.role,
-        user_name=user.full_name or user.username or user.email,
+        user_name=user.full_name or user.username or user.phone or user.email,
         user_phone=user.phone,
     )
 
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 def register(req: RegisterRequest, db: Session = Depends(get_db)):
-    clean_email = req.email.strip().lower()
-    if req.username and req.username.strip():
-        clean_username = req.username.strip()
-    else:
-        base_user = clean_email.split("@")[0].replace("+", "_")
-        clean_username = base_user
-        counter = 1
-        while db.query(User).filter(User.username.ilike(clean_username)).first():
-            clean_username = f"{base_user}{counter}"
-            counter += 1
+    clean_phone = req.phone.strip() if req.phone else (req.username.strip() if req.username else None)
+    clean_digits = "".join(c for c in clean_phone if c.isdigit()) if clean_phone else ""
 
-    if len(clean_username) < 3:
-        clean_username = f"{clean_username}_user"
+    if not clean_digits and not req.email:
+        raise HTTPException(status_code=400, detail="Mobile number is required")
+
+    # Check if mobile already exists
+    if clean_digits:
+        last_10 = clean_digits[-10:] if len(clean_digits) >= 10 else clean_digits
+        existing_phone = db.query(User).filter(User.phone.like(f"%{last_10}%")).first()
+        if existing_phone:
+            raise HTTPException(status_code=400, detail="An account with this mobile number already exists. Please sign in.")
+
+    clean_email = req.email.strip().lower() if req.email else f"user_{clean_digits or random.randint(100000, 999999)}@brbdecors.com"
+    clean_username = f"user_{clean_digits}" if clean_digits else clean_email.split("@")[0]
+
     if len(req.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
 
-    # Check for existing email or username
     existing_email = db.query(User).filter(User.email.ilike(clean_email)).first()
     if existing_email:
-        raise HTTPException(status_code=400, detail="An account with this email already exists")
-
-    if req.username and req.username.strip():
-        existing_username = db.query(User).filter(User.username.ilike(clean_username)).first()
-        if existing_username:
-            raise HTTPException(status_code=400, detail="This username is already taken")
+        clean_email = f"user_{clean_digits}_{random.randint(100, 999)}@brbdecors.com"
 
     new_user = User(
         username=clean_username,
         email=clean_email,
-        full_name=req.full_name.strip() if req.full_name else clean_username,
-        phone=req.phone.strip() if req.phone else None,
+        full_name=req.full_name.strip() if req.full_name else clean_phone,
+        phone=clean_phone,
         password_hash=get_password_hash(req.password),
         role="customer",
         is_active=True,

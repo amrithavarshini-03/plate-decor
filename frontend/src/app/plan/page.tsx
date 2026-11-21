@@ -1623,14 +1623,13 @@ function PlatePlannerInner() {
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
                     <Mail className="w-3 h-3 text-[#E9A62B]" />
-                    <span>Email Address *</span>
+                    <span>Email Address <span className="text-[10px] text-[#635166] font-normal">(Optional)</span></span>
                   </label>
                   <input
                     type="email"
-                    placeholder="e.g. anand@gmail.com"
+                    placeholder="e.g. anand@gmail.com (Optional)"
                     value={authEmail}
                     onChange={(e) => setAuthEmail(e.target.value)}
-                    required
                     className="w-full px-3 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E]"
                   />
                 </div>
@@ -1666,12 +1665,12 @@ function PlatePlannerInner() {
               <form onSubmit={handleModalLogin} className="space-y-3.5">
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
-                    <User className="w-3 h-3 text-[#E9A62B]" />
-                    <span>Username or Email *</span>
+                    <Phone className="w-3 h-3 text-[#E9A62B]" />
+                    <span>Mobile Number *</span>
                   </label>
                   <input
-                    type="text"
-                    placeholder="Enter username or email"
+                    type="tel"
+                    placeholder="e.g. 7010875133"
                     value={authIdentifier}
                     onChange={(e) => setAuthIdentifier(e.target.value)}
                     required

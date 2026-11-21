@@ -88,7 +88,6 @@ function CustomerAuthContent() {
     setLoading(true);
     try {
       const res = await api.customerRegister({
-        email: email.trim(),
         phone: phone.trim(),
         password,
         full_name: fullName.trim(),
@@ -105,7 +104,7 @@ function CustomerAuthContent() {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!forgotIdentifier.trim()) {
-      setError("Please enter your registered mobile number or email.");
+      setError("Please enter your registered mobile number.");
       return;
     }
     setError(null);
@@ -120,14 +119,14 @@ function CustomerAuthContent() {
         setOtp(res.dev_otp);
         setSuccessMsg(`Verification code generated: ${res.dev_otp} (Auto-filled below). Enter your new password to reset.`);
       } else {
-        setSuccessMsg(res.message || `6-digit verification code sent to ${forgotIdentifier}. Please check your phone / email.`);
+        setSuccessMsg(res.message || `6-digit verification code sent to ${forgotIdentifier}. Please check your phone.`);
       }
     } catch (err: any) {
       const errMsg = err.message || "";
       if (errMsg.toLowerCase().includes("no registered account found")) {
-        setError("No registered account found with this mobile number or email. Please click 'Create Account' to sign up first.");
+        setError("No registered account found with this mobile number. Please click 'Create Account' to sign up first.");
       } else {
-        setError(errMsg || "Could not send OTP. Please check the details entered.");
+        setError(errMsg || "Could not send OTP. Please check your mobile number.");
       }
     } finally {
       setLoading(false);
@@ -265,12 +264,12 @@ function CustomerAuthContent() {
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-[#E9A62B]" />
-                    <span>Email Address</span>
+                    <Phone className="w-3.5 h-3.5 text-[#E9A62B]" />
+                    <span>Mobile Number</span>
                   </label>
                   <input
-                    type="text"
-                    placeholder="Enter your registered email address"
+                    type="tel"
+                    placeholder="e.g. 7010875133"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     required
@@ -344,28 +343,13 @@ function CustomerAuthContent() {
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-[#E9A62B]" />
-                    <span>WhatsApp Contact Number *</span>
+                    <span>Mobile Number *</span>
                   </label>
                   <input
                     type="tel"
-                    placeholder="e.g. +91 98765 43210"
+                    placeholder="e.g. 7010875133"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    required
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E] focus:outline-none focus:ring-2 focus:ring-[#2F5D3A]"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-[#E9A62B]" />
-                    <span>Email Address *</span>
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="e.g. anand@gmail.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     required
                     className="w-full px-3.5 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E] focus:outline-none focus:ring-2 focus:ring-[#2F5D3A]"
                   />
@@ -406,17 +390,17 @@ function CustomerAuthContent() {
                 {forgotStep === 1 ? (
                   <form onSubmit={handleSendOtp} className="space-y-4">
                     <p className="text-xs text-[#635166] leading-relaxed">
-                      Enter the <strong>Mobile Number</strong> or <strong>Email Address</strong> registered with your BRB Decors account. We will send you a 6-digit OTP verification code.
+                      Enter your registered <strong>Mobile Number</strong>. We will send you a 6-digit OTP verification code via message.
                     </p>
 
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-[#2B1A2E] flex items-center gap-1.5">
                         <Phone className="w-3.5 h-3.5 text-[#E9A62B]" />
-                        <span>Registered Mobile Number or Email</span>
+                        <span>Registered Mobile Number</span>
                       </label>
                       <input
-                        type="text"
-                        placeholder="e.g. +91 80563 43769 or your@gmail.com"
+                        type="tel"
+                        placeholder="e.g. 7010875133"
                         value={forgotIdentifier}
                         onChange={(e) => setForgotIdentifier(e.target.value)}
                         required
@@ -430,7 +414,7 @@ function CustomerAuthContent() {
                         disabled={loading}
                         className="w-full flex items-center justify-center gap-2 py-3"
                       >
-                        <span>{loading ? "Sending Mobile / Email OTP..." : "Send Verification OTP"}</span>
+                        <span>{loading ? "Sending Mobile OTP..." : "Send Verification OTP via Message"}</span>
                         <KeyRound className="w-4 h-4" />
                       </PetalButton>
                     </div>
@@ -440,11 +424,7 @@ function CustomerAuthContent() {
                         type="button"
                         onClick={() => {
                           setMode("register");
-                          if (forgotIdentifier.includes("@")) {
-                            setEmail(forgotIdentifier);
-                          } else {
-                            setPhone(forgotIdentifier);
-                          }
+                          setPhone(forgotIdentifier);
                           setError(null);
                         }}
                         className="text-xs text-[#8B5E14] hover:text-[#2F5D3A] hover:underline font-medium"
@@ -456,7 +436,7 @@ function CustomerAuthContent() {
                 ) : (
                   <form onSubmit={handleResetPassword} className="space-y-3.5">
                     <p className="text-xs text-[#635166] leading-relaxed">
-                      Enter the 6-digit OTP code sent to <strong>{forgotIdentifier}</strong> and your desired new password.
+                      Enter the 6-digit OTP code sent to your mobile <strong>{forgotIdentifier}</strong> and your desired new password.
                     </p>
 
                     {otp && (
