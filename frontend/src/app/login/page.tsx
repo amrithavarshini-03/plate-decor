@@ -116,9 +116,19 @@ function CustomerAuthContent() {
     try {
       const res = await api.forgotPassword(forgotEmail.trim());
       setForgotStep(2);
-      setSuccessMsg(res.message || `6-digit verification code sent to ${forgotEmail}. Please check your email.`);
+      if (res.dev_otp) {
+        setOtp(res.dev_otp);
+        setSuccessMsg(`Verification code generated! (Dev/Test code: ${res.dev_otp})`);
+      } else {
+        setSuccessMsg(res.message || `6-digit verification code sent to ${forgotEmail}. Please check your email.`);
+      }
     } catch (err: any) {
-      setError(err.message || "Could not send OTP. Please check the email address.");
+      const errMsg = err.message || "";
+      if (errMsg.toLowerCase().includes("no registered account found")) {
+        setError("No registered account found with this email address. Please click 'Create Account' to sign up first.");
+      } else {
+        setError(errMsg || "Could not send OTP. Please check the email address.");
+      }
     } finally {
       setLoading(false);
     }
@@ -473,6 +483,20 @@ function CustomerAuthContent() {
                         <span>{loading ? "Sending OTP Code..." : "Send Verification OTP"}</span>
                         <KeyRound className="w-4 h-4" />
                       </PetalButton>
+                    </div>
+
+                    <div className="text-center pt-2 border-t border-[#E8DAC8]/60">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode("register");
+                          setEmail(forgotEmail);
+                          setError(null);
+                        }}
+                        className="text-xs text-[#8B5E14] hover:text-[#2F5D3A] hover:underline font-medium"
+                      >
+                        Don&apos;t have an account yet? <span className="font-bold underline text-[#2F5D3A]">Create Account here</span>
+                      </button>
                     </div>
                   </form>
                 ) : (
