@@ -32,6 +32,7 @@ import {
   Upload,
   UserCheck,
   Check,
+  Edit3,
 } from "lucide-react";
 import {
   api,
@@ -87,6 +88,25 @@ export default function AdminDashboardPage() {
     image_url: "/images/decor/sevvazhai_golden_lotus.jpg",
     description: "",
     is_featured: false,
+  });
+
+  // Edit Gallery Item State
+  const [editingGalleryItem, setEditingGalleryItem] = useState<ApiGalleryItem | null>(null);
+  const [showEditGalleryModal, setShowEditGalleryModal] = useState(false);
+  const [updatingGallery, setUpdatingGallery] = useState(false);
+  const [uploadingEditImage, setUploadingEditImage] = useState(false);
+  const [editGalleryForm, setEditGalleryForm] = useState({
+    title: "",
+    title_tamil: "",
+    occasion: "wedding",
+    plate_type: "fruits",
+    color_theme: "turmeric_gold",
+    budget: "signature",
+    price: 3500,
+    price_range: "₹3,000 – ₹4,500",
+    image_url: "",
+    description: "",
+    is_featured: true,
   });
 
   // Hotspot modal state
@@ -359,6 +379,42 @@ Please reply here to confirm your booking or if you need any customizations! ✨
       showToast("New ceremonial plate arrangement published!");
     } catch (err: any) {
       showToast(err.message || "Failed to save arrangement");
+    }
+  };
+
+  // Edit Gallery Item Image Upload
+  const handleEditImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingEditImage(true);
+    try {
+      const res = await api.uploadFile(file);
+      setEditGalleryForm((prev) => ({ ...prev, image_url: res.url }));
+      showToast("Photo uploaded successfully!");
+    } catch (err: any) {
+      showToast(err.message || "Image upload failed");
+    } finally {
+      setUploadingEditImage(false);
+    }
+  };
+
+  // Update Gallery Item
+  const handleUpdateGalleryItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingGalleryItem) return;
+    setUpdatingGallery(true);
+    try {
+      const updated = await api.updateGalleryItem(editingGalleryItem.id, editGalleryForm);
+      setGallery((prev) =>
+        prev.map((g) => (g.id === editingGalleryItem.id ? { ...g, ...editGalleryForm, ...updated } : g))
+      );
+      setShowEditGalleryModal(false);
+      setEditingGalleryItem(null);
+      showToast("Ceremonial arrangement details updated successfully!");
+    } catch (err: any) {
+      showToast(err.message || "Failed to update arrangement");
+    } finally {
+      setUpdatingGallery(false);
     }
   };
 
@@ -921,8 +977,34 @@ Please reply here to confirm your booking or if you need any customizations! ✨
                   </div>
                 </div>
 
-                <div className="pt-3 flex items-center justify-between border-t border-[#E8DAC8]">
+                <div className="pt-3 flex items-center justify-between border-t border-[#E8DAC8] gap-2 flex-wrap">
                   <button
+                    type="button"
+                    onClick={() => {
+                      setEditingGalleryItem(item);
+                      setEditGalleryForm({
+                        title: item.title,
+                        title_tamil: item.title_tamil || "",
+                        occasion: item.occasion || "wedding",
+                        plate_type: item.plate_type || "fruits",
+                        color_theme: item.color_theme || "turmeric_gold",
+                        budget: item.budget || "signature",
+                        price: item.price || 3500,
+                        price_range: item.price_range || "",
+                        image_url: item.image_url,
+                        description: item.description || "",
+                        is_featured: item.is_featured ?? true,
+                      });
+                      setShowEditGalleryModal(true);
+                    }}
+                    className="text-xs font-semibold text-[#8B5E14] hover:text-[#5C3E0D] hover:underline flex items-center gap-1 transition-colors"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Edit Details</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => setHotspotTargetItem(item)}
                     className="text-xs font-semibold text-[#2F5D3A] hover:underline flex items-center gap-1"
                   >
@@ -931,6 +1013,7 @@ Please reply here to confirm your booking or if you need any customizations! ✨
                   </button>
 
                   <button
+                    type="button"
                     onClick={async () => {
                       if (confirm(`Are you sure you want to delete "${item.title}"?`)) {
                         await api.deleteGalleryItem(item.id);
@@ -1774,6 +1857,239 @@ Please reply here to confirm your booking or if you need any customizations! ✨
             >
               Save & Publish to Gallery
             </button>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL: EDIT CEREMONIAL ARRANGEMENT DETAILS */}
+      {showEditGalleryModal && editingGalleryItem && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <form
+            onSubmit={handleUpdateGalleryItem}
+            className="bg-[#FFFDF9] rounded-3xl border-2 border-[#E8DAC8] max-w-lg w-full max-h-[92vh] overflow-y-auto p-6 sm:p-8 space-y-4 shadow-2xl animate-in zoom-in-95 duration-150"
+          >
+            <div className="flex items-center justify-between border-b border-[#E8DAC8] pb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#E9A62B] bg-[#FAF3E7] px-2 py-0.5 rounded-full border border-[#E8DAC8]">
+                    {editingGalleryItem.id}
+                  </span>
+                  <span className="text-xs font-serif font-bold text-[#2F5D3A]">Edit Details</span>
+                </div>
+                <h3 className="font-serif text-xl font-bold text-[#2B1A2E] mt-0.5">
+                  Update Arrangement
+                </h3>
+                <p className="text-xs text-[#635166]">
+                  Modify title, pricing, ceremony occasion, photo, and artisan notes.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEditGalleryModal(false);
+                  setEditingGalleryItem(null);
+                }}
+                className="w-8 h-8 rounded-full bg-[#FAF3E7] flex items-center justify-center text-[#635166] hover:text-[#2B1A2E]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="font-semibold block mb-1 text-[#2B1A2E]">Arrangement Title (English) *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Royal Sevvazhai & Golden Lotus Thaalam"
+                  value={editGalleryForm.title}
+                  onChange={(e) => setEditGalleryForm({ ...editGalleryForm, title: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] font-semibold text-[#2B1A2E] focus:outline-[#2F5D3A]"
+                />
+              </div>
+
+              <div>
+                <label className="font-semibold block mb-1 text-[#2B1A2E]">Title in Tamil (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. பொன் தாமரை & அலங்கார செவ்வாழைத் தட்டு"
+                  value={editGalleryForm.title_tamil}
+                  onChange={(e) => setEditGalleryForm({ ...editGalleryForm, title_tamil: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-[#2B1A2E] focus:outline-[#2F5D3A]"
+                />
+              </div>
+
+              {/* Price & Price Range */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="font-semibold block mb-1 text-[#2B1A2E]">Starting Price (₹ INR) *</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="3500"
+                    value={editGalleryForm.price}
+                    onChange={(e) => setEditGalleryForm({ ...editGalleryForm, price: parseFloat(e.target.value) || 0 })}
+                    className="w-full p-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] font-semibold text-[#2F5D3A] focus:outline-[#2F5D3A]"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1 text-[#2B1A2E]">Display Price Note / Range</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. ₹3,000 – ₹4,500"
+                    value={editGalleryForm.price_range}
+                    onChange={(e) => setEditGalleryForm({ ...editGalleryForm, price_range: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-[#2B1A2E] focus:outline-[#2F5D3A]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="font-semibold block mb-1 text-[#2B1A2E]">Ceremony Occasion</label>
+                  <select
+                    value={editGalleryForm.occasion}
+                    onChange={(e) => setEditGalleryForm({ ...editGalleryForm, occasion: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-[#2B1A2E]"
+                  >
+                    <option value="puberty">Puberty (Manjal Neerattu Vizha)</option>
+                    <option value="wedding">Wedding Seer Varisai</option>
+                    <option value="baby_shower">Baby Shower (Valaikappu)</option>
+                    <option value="housewarming">Housewarming (Grihapravesam)</option>
+                    <option value="birthday">Milestone Birthday / Sashtiabdapoorthi</option>
+                    <option value="festivals">Auspicious Festivals</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1 text-[#2B1A2E]">Plate Type</label>
+                  <select
+                    value={editGalleryForm.plate_type}
+                    onChange={(e) => setEditGalleryForm({ ...editGalleryForm, plate_type: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-[#2B1A2E]"
+                  >
+                    <option value="fruits">Fruits & Leaf Carving</option>
+                    <option value="flowers">Floral Arrangement</option>
+                    <option value="sweets_dryfruits">Sweets & Dry Fruits</option>
+                    <option value="deity">Deity / Kalasam Plate</option>
+                    <option value="baby_theme">Baby Theme Topper</option>
+                    <option value="stage_backdrop">Stage Backdrop</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="font-semibold block mb-1 text-[#2B1A2E]">Color Theme</label>
+                  <select
+                    value={editGalleryForm.color_theme}
+                    onChange={(e) => setEditGalleryForm({ ...editGalleryForm, color_theme: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-[#2B1A2E]"
+                  >
+                    <option value="turmeric_gold">Turmeric Gold</option>
+                    <option value="kumkum_red">Kumkum Red</option>
+                    <option value="lotus_pink">Lotus Pink</option>
+                    <option value="banana_green">Banana Green</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1 text-[#2B1A2E]">Budget Category</label>
+                  <select
+                    value={editGalleryForm.budget}
+                    onChange={(e) => setEditGalleryForm({ ...editGalleryForm, budget: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-[#2B1A2E]"
+                  >
+                    <option value="essential">Essential</option>
+                    <option value="signature">Signature</option>
+                    <option value="grand">Grand Royal</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Photo Upload or URL with Preview */}
+              <div>
+                <label className="font-semibold block mb-1 text-[#2B1A2E]">Plate Photo</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    required
+                    value={editGalleryForm.image_url}
+                    onChange={(e) => setEditGalleryForm({ ...editGalleryForm, image_url: e.target.value })}
+                    placeholder="/images/decor/..."
+                    className="flex-1 p-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-[#2B1A2E]"
+                  />
+                  <label className="px-3 py-2.5 rounded-xl bg-[#2F5D3A] text-white font-semibold cursor-pointer hover:bg-[#214229] transition-colors flex items-center gap-1.5 shrink-0">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{uploadingEditImage ? "Uploading..." : "Upload File"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleEditImageUpload}
+                      disabled={uploadingEditImage}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                {editGalleryForm.image_url && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-[#E8DAC8] bg-[#FAF3E7] shrink-0">
+                      <Image
+                        src={editGalleryForm.image_url}
+                        alt="Preview"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <span className="text-[11px] text-[#635166] truncate">{editGalleryForm.image_url}</span>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="font-semibold block mb-1 text-[#2B1A2E]">Description & Artisan Customization</label>
+                <textarea
+                  rows={3}
+                  placeholder="Materials used, auspicious leaves, flower varieties, customization notes..."
+                  value={editGalleryForm.description}
+                  onChange={(e) => setEditGalleryForm({ ...editGalleryForm, description: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-[#2B1A2E]"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="edit-featured-check"
+                  checked={editGalleryForm.is_featured}
+                  onChange={(e) => setEditGalleryForm({ ...editGalleryForm, is_featured: e.target.checked })}
+                  className="rounded text-[#2F5D3A]"
+                />
+                <label htmlFor="edit-featured-check" className="font-semibold cursor-pointer text-[#2B1A2E]">
+                  Feature this plate on website homepage
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-3 border-t border-[#E8DAC8]">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEditGalleryModal(false);
+                  setEditingGalleryItem(null);
+                }}
+                className="flex-1 py-3 rounded-full border border-[#E8DAC8] text-[#635166] text-xs font-semibold hover:bg-[#FAF3E7] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={updatingGallery}
+                className="flex-1 py-3 rounded-full bg-[#2F5D3A] text-white text-xs font-semibold hover:bg-[#214229] transition-colors shadow-xs disabled:opacity-50"
+              >
+                {updatingGallery ? "Saving Changes..." : "Save Changes"}
+              </button>
+            </div>
           </form>
         </div>
       )}

@@ -35,27 +35,191 @@ def seed_database(db: Session = Depends(get_db)):
     else:
         results["admin"] = "already_exists"
 
-    # 2. Gallery Items & Hotspots
-    if db.query(GalleryItem).count() == 0:
-        g1 = GalleryItem(
-            id="gal-1",
-            title="Gilded Sevvazhai & Golden Lotus Thaalam",
-            title_tamil="பொன் தாமரை & அலங்கார செவ்வாழைத் தட்டு",
-            occasion="puberty",
-            plate_type="fruits",
-            color_theme="turmeric_gold",
-            budget="signature",
-            image_url="/images/decor/sevvazhai_golden_lotus.jpg",
-            is_featured=True,
-            sort_order=1,
-            description="Ceremonial red bananas (செவ்வாழை) accented with golden pearl chains and sapphire stones, radiating around an embossed golden lotus centerpiece on an antique silver tray.",
-        )
-        db.add(g1)
-        db.flush()
+    # 2. Gallery Items & Hotspots (All 11 authentic home page decor works)
+    gallery_data = [
+        {
+            "id": "gal-1",
+            "title": "Artisanal Pistachio & Almond Floral Bouquet",
+            "title_tamil": "பிஸ்தா & பாதாம் உலர் பழ மலர் கொத்து",
+            "occasion": "wedding",
+            "plate_type": "sweets_dryfruits",
+            "color_theme": "turmeric_gold",
+            "budget": "signature",
+            "price": 3500.0,
+            "price_range": "₹3,000 – ₹4,500",
+            "image_url": "/images/decor/1.jpeg",
+            "is_featured": True,
+            "sort_order": 1,
+            "description": "Intricately hand-sculpted dry fruit flower blossoms created from whole pistachios, almond petals with pearl centers, accompanied by fresh chrysanthemums on an embossed silver tray.",
+        },
+        {
+            "id": "gal-2",
+            "title": "Auspicious Valaikappu Baby Footprint Kalkandu Tray",
+            "title_tamil": "வளைகாப்பு குழந்தை பாத கற்கண்டுத் தட்டு",
+            "occasion": "baby_shower",
+            "plate_type": "baby_theme",
+            "color_theme": "lotus_pink",
+            "budget": "signature",
+            "price": 2800.0,
+            "price_range": "₹2,500 – ₹3,500",
+            "image_url": "/images/decor/2.jpeg",
+            "is_featured": True,
+            "sort_order": 2,
+            "description": "Tender baby footprints arranged with fresh mandarin orange segments and ruby pomegranate seeds on a betel leaf, resting on a bed of sparkling rock sugar crystals framed by banana leaf cones and jasmine buds.",
+        },
+        {
+            "id": "gal-3",
+            "title": "Gilded Sevvazhai & Golden Lotus Thaalam",
+            "title_tamil": "பொன் தாமரை & அலங்கார செவ்வாழைத் தட்டு",
+            "occasion": "puberty",
+            "plate_type": "fruits",
+            "color_theme": "turmeric_gold",
+            "budget": "signature",
+            "price": 4200.0,
+            "price_range": "₹3,800 – ₹5,000",
+            "image_url": "/images/decor/3.jpeg",
+            "is_featured": True,
+            "sort_order": 3,
+            "description": "Auspicious red bananas (செவ்வாழை) accented with studded golden bead lines and sapphire jewels, radiating around a shimmering golden lotus centerpiece on an antique filigree silver tray.",
+        },
+        {
+            "id": "gal-4",
+            "title": "Miniature Golden Krishna in Beaded Arch Swing",
+            "title_tamil": "கற்கண்டுப் படுகையில் கண்ணன் மலர் தொட்டில்",
+            "occasion": "baby_shower",
+            "plate_type": "baby_theme",
+            "color_theme": "kumkum_red",
+            "budget": "signature",
+            "price": 3200.0,
+            "price_range": "₹2,800 – ₹4,000",
+            "image_url": "/images/decor/4.jpeg",
+            "is_featured": True,
+            "sort_order": 4,
+            "description": "Golden Balakrishna enshrined in an ornate ceremonial swing with red and blue glass beads and a brass bell, resting on an auspicious bed of sugar crystals (kalkandu).",
+        },
+        {
+            "id": "gal-5",
+            "title": "Banana Leaf & Bangle Grid Stage Artistry",
+            "title_tamil": "வளைகாப்பு மேடை & வாழை இலை மாலை அலங்காரம்",
+            "occasion": "baby_shower",
+            "plate_type": "stage_backdrop",
+            "color_theme": "turmeric_gold",
+            "budget": "grand",
+            "price": 15000.0,
+            "price_range": "₹12,000 – ₹20,000",
+            "image_url": "/images/decor/5.jpeg",
+            "is_featured": True,
+            "sort_order": 5,
+            "description": "Grand celebratory stage backdrop featuring lush banana leaf tapestries, cascading marigold garlands, suspended lotus bells, and wooden grid displays of colorful ceremonial glass bangles.",
+        },
+        {
+            "id": "gal-6",
+            "title": "Seemantham Expectant Parents Platter",
+            "title_tamil": "சீமந்தத் தம்பதியர் பழங்கள் & ரோஜாத் தட்டு",
+            "occasion": "baby_shower",
+            "plate_type": "fruits",
+            "color_theme": "lotus_pink",
+            "budget": "signature",
+            "price": 3600.0,
+            "price_range": "₹3,000 – ₹4,500",
+            "image_url": "/images/decor/6.jpeg",
+            "is_featured": True,
+            "sort_order": 6,
+            "description": "Artistic cutout of expectant parents in traditional festive attire, elevated above a bed of crowned gala apples, delicate pink roses, baby's breath, and silver filigree rim.",
+        },
+        {
+            "id": "gal-7",
+            "title": "Vetrilai Mandala & Auspicious Turmeric Lemon Plate",
+            "title_tamil": "வெற்றிலை மண்டலம் & மங்கள எலுமிச்சைத் தட்டு",
+            "occasion": "housewarming",
+            "plate_type": "deity",
+            "color_theme": "turmeric_gold",
+            "budget": "essential",
+            "price": 2200.0,
+            "price_range": "₹1,800 – ₹2,800",
+            "image_url": "/images/decor/7.jpeg",
+            "is_featured": True,
+            "sort_order": 7,
+            "description": "Hand-arranged geometric betel leaf mandala with consecrated turmeric lemons, kumkum, and fresh yellow marigolds.",
+        },
+        {
+            "id": "gal-8",
+            "title": "Sacred Kalasam & Auspicious Ceremonial Thaalam",
+            "title_tamil": "மங்கலக் கலசம் & ஆராத்தி தட்டு அலங்காரம்",
+            "occasion": "puberty",
+            "plate_type": "deity",
+            "color_theme": "turmeric_gold",
+            "budget": "signature",
+            "price": 3800.0,
+            "price_range": "₹3,200 – ₹4,800",
+            "image_url": "/images/decor/8.jpeg",
+            "is_featured": True,
+            "sort_order": 8,
+            "description": "Traditional sacred kalasam with fresh mango leaves, decorative coconut, and auspicious ganesha motif encircled by fresh red roses and jasmine garlands on an antique brass thaalam.",
+        },
+        {
+            "id": "gal-9",
+            "title": "Grand Brass Kuthuvilakku Rose Garland Decor",
+            "title_tamil": "மங்கல குத்துவிளக்கு & ரோஜா மாலை அலங்காரம்",
+            "occasion": "wedding",
+            "plate_type": "flowers",
+            "color_theme": "kumkum_red",
+            "budget": "grand",
+            "price": 4500.0,
+            "price_range": "₹4,000 – ₹6,000",
+            "image_url": "/images/decor/9.jpeg",
+            "is_featured": True,
+            "sort_order": 9,
+            "description": "Traditional South Indian heirloom brass kuthuvilakku adorned with lush layered paneer rose garlands, fragrant marigolds, and betel leaf base decoration for wedding seer varisai.",
+        },
+        {
+            "id": "gal-10",
+            "title": "Traditional Valaikappu Mother Orange & Jasmine Ring",
+            "title_tamil": "வளைகாப்பு தாய் & மங்கல ஆரஞ்சு மலர் வளையம்",
+            "occasion": "baby_shower",
+            "plate_type": "fruits",
+            "color_theme": "turmeric_gold",
+            "budget": "signature",
+            "price": 3000.0,
+            "price_range": "₹2,500 – ₹3,800",
+            "image_url": "/images/decor/10.jpeg",
+            "is_featured": True,
+            "sort_order": 10,
+            "description": "Auspicious ceremonial ring plate displaying expectant mother surrounded by golden Nagpur oranges, fresh fragrant madurai malli jasmine, and red rose buds.",
+        },
+        {
+            "id": "gal-11",
+            "title": "Auspicious Green Apple & Fruit Varisai Thaalam",
+            "title_tamil": "மங்கல பச்சை ஆப்பிள் & பழ வரிசைத் தட்டு",
+            "occasion": "housewarming",
+            "plate_type": "fruits",
+            "color_theme": "turmeric_gold",
+            "budget": "essential",
+            "price": 2600.0,
+            "price_range": "₹2,200 – ₹3,500",
+            "image_url": "/images/decor/11.jpeg",
+            "is_featured": True,
+            "sort_order": 11,
+            "description": "Auspicious geometric fruit arrangement with crisp green Granny Smith apples, pomegranate accents, and folded banana leaf cones for Grihapravesam and festive poojas.",
+        },
+    ]
 
+    for g_item in gallery_data:
+        existing = db.query(GalleryItem).filter(GalleryItem.id == g_item["id"]).first()
+        if not existing:
+            new_item = GalleryItem(**g_item)
+            db.add(new_item)
+        else:
+            for k, v in g_item.items():
+                setattr(existing, k, v)
+    db.commit()
+
+    # Add default hotspots if missing on gal-3
+    g3_item = db.query(GalleryItem).filter(GalleryItem.id == "gal-3").first()
+    if g3_item and len(g3_item.hotspots) == 0:
         db.add(
             GalleryHotspot(
-                gallery_item_id="gal-1",
+                gallery_item_id="gal-3",
                 x_percent=48,
                 y_percent=38,
                 product_id="p2",
@@ -65,82 +229,9 @@ def seed_database(db: Session = Depends(get_db)):
                 price_note="₹240 on Amazon",
             )
         )
-        db.add(
-            GalleryHotspot(
-                gallery_item_id="gal-1",
-                x_percent=70,
-                y_percent=80,
-                product_id="p1",
-                title="Embossed Silver Pooja Thaalam",
-                product_name="14-Inch Traditional German Silver Serving Plate",
-                affiliate_url="https://amazon.in",
-                price_note="₹1,250 on Amazon",
-            )
-        )
+        db.commit()
 
-        g2 = GalleryItem(
-            id="gal-2",
-            title="Pistachio Flora & Almond Pinecone Bouquet",
-            title_tamil="உலர் பழ மலர்க் கொத்து & பிஸ்தா அரும்புத் தட்டு",
-            occasion="wedding",
-            plate_type="sweets_dryfruits",
-            color_theme="turmeric_gold",
-            budget="grand",
-            image_url="/images/decor/pistachio_almond_floral_bouquet.jpg",
-            is_featured=True,
-            sort_order=2,
-            description="Handcrafted dry fruit botanical sculpture featuring blooming pistachio-shell dahlias, almond pinecone blossoms with pearl centers, and fresh dracaena greens.",
-        )
-        db.add(g2)
-        db.flush()
-
-        g3 = GalleryItem(
-            id="gal-3",
-            title="Mandarin Baby Footprints on Sugar Crystals",
-            title_tamil="குழந்தை பாத கற்கண்டு & வெற்றிலை மங்கலத் தட்டு",
-            occasion="baby_shower",
-            plate_type="baby_theme",
-            color_theme="lotus_pink",
-            budget="signature",
-            image_url="/images/decor/baby_footprint_mandarin_sugar.jpg",
-            is_featured=True,
-            sort_order=3,
-            description="Adorable miniature baby footprints sculpted from juicy mandarin orange segments with ruby pomegranate aril toes, resting on a sacred betel leaf over pure rock sugar crystals.",
-        )
-        db.add(g3)
-        db.flush()
-
-        g4 = GalleryItem(
-            id="gal-4",
-            title="Pathinaru Selvangal Sacred Kolam Coconuts",
-            title_tamil="பதினாறு பேறுகள் மங்கள தேங்காய்த் தட்டு",
-            occasion="wedding",
-            plate_type="deity",
-            color_theme="kumkum_red",
-            budget="grand",
-            image_url="/images/decor/pathinaru_selvangal_coconuts.jpg",
-            is_featured=True,
-            sort_order=4,
-            description="Auspicious ceremonial turmeric coconuts hand-painted with sacred kolams and capped with crimson netted cones, honoring the 16 Traditional Tamil Blessings.",
-        )
-        db.add(g4)
-
-        g5 = GalleryItem(
-            id="gal-5",
-            title="Modular Marigold & Bangle Stage Backdrop",
-            title_tamil="செவ்வந்தி மாலை & கண்ணாடி வளையல் மேடை அலங்காரம்",
-            occasion="baby_shower",
-            plate_type="stage_backdrop",
-            color_theme="turmeric_gold",
-            budget="grand",
-            image_url="/images/decor/valaikappu_full_stage_backdrop.jpg",
-            is_featured=True,
-            sort_order=5,
-            description="Grand Valaikappu & Seemantham ceremony stage featuring modular timber grid frames filled with dense marigold blocks, stacks of colorful glass bangles, and suspended carved lotus bells.",
-        )
-        db.add(g5)
-
-        results["gallery"] = "seeded 5 items"
+    results["gallery"] = f"synced {len(gallery_data)} items"
 
     # 3. Products
     if db.query(Product).count() == 0:

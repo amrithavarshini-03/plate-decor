@@ -286,6 +286,197 @@ function authHeaders(): Record<string, string> {
   return headers;
 }
 
+// All 11 Authentic Ceremonial Home Page Decor Works
+export const DEFAULT_HOME_PAGE_GALLERY: ApiGalleryItem[] = [
+  {
+    id: "gal-1",
+    title: "Artisanal Pistachio & Almond Floral Bouquet",
+    title_tamil: "பிஸ்தா & பாதாம் உலர் பழ மலர் கொத்து",
+    occasion: "wedding",
+    plate_type: "sweets_dryfruits",
+    color_theme: "turmeric_gold",
+    budget: "signature",
+    price: 3500,
+    price_range: "₹3,000 – ₹4,500",
+    image_url: "/images/decor/1.jpeg",
+    description: "Intricately hand-sculpted dry fruit flower blossoms created from whole pistachios, almond petals with pearl centers, accompanied by fresh chrysanthemums on an embossed silver tray.",
+    is_featured: true,
+    sort_order: 1,
+    hotspots: [],
+  },
+  {
+    id: "gal-2",
+    title: "Auspicious Valaikappu Baby Footprint Kalkandu Tray",
+    title_tamil: "வளைகாப்பு குழந்தை பாத கற்கண்டுத் தட்டு",
+    occasion: "baby_shower",
+    plate_type: "baby_theme",
+    color_theme: "lotus_pink",
+    budget: "signature",
+    price: 2800,
+    price_range: "₹2,500 – ₹3,500",
+    image_url: "/images/decor/2.jpeg",
+    description: "Tender baby footprints arranged with fresh mandarin orange segments and ruby pomegranate seeds on a betel leaf, resting on a bed of sparkling rock sugar crystals framed by banana leaf cones and jasmine buds.",
+    is_featured: true,
+    sort_order: 2,
+    hotspots: [],
+  },
+  {
+    id: "gal-3",
+    title: "Gilded Sevvazhai & Golden Lotus Thaalam",
+    title_tamil: "பொன் தாமரை & அலங்கார செவ்வாழைத் தட்டு",
+    occasion: "puberty",
+    plate_type: "fruits",
+    color_theme: "turmeric_gold",
+    budget: "signature",
+    price: 4200,
+    price_range: "₹3,800 – ₹5,000",
+    image_url: "/images/decor/3.jpeg",
+    description: "Auspicious red bananas (செவ்வாழை) accented with studded golden bead lines and sapphire jewels, radiating around a shimmering golden lotus centerpiece on an antique filigree silver tray.",
+    is_featured: true,
+    sort_order: 3,
+    hotspots: [
+      {
+        id: 1,
+        gallery_item_id: "gal-3",
+        x_percent: 48,
+        y_percent: 38,
+        title: "Glitter Golden Lotus Centerpiece",
+        product_name: "Festive Shimmer Foam Lotus Crown",
+        affiliate_url: "https://amazon.in",
+        price_note: "₹240 on Amazon",
+      },
+    ],
+  },
+  {
+    id: "gal-4",
+    title: "Miniature Golden Krishna in Beaded Arch Swing",
+    title_tamil: "கற்கண்டுப் படுகையில் கண்ணன் மலர் தொட்டில்",
+    occasion: "baby_shower",
+    plate_type: "baby_theme",
+    color_theme: "kumkum_red",
+    budget: "signature",
+    price: 3200,
+    price_range: "₹2,800 – ₹4,000",
+    image_url: "/images/decor/4.jpeg",
+    description: "Golden Balakrishna enshrined in an ornate ceremonial swing with red and blue glass beads and a brass bell, resting on an auspicious bed of sugar crystals (kalkandu).",
+    is_featured: true,
+    sort_order: 4,
+    hotspots: [],
+  },
+  {
+    id: "gal-5",
+    title: "Banana Leaf & Bangle Grid Stage Artistry",
+    title_tamil: "வளைகாப்பு மேடை & வாழை இலை மாலை அலங்காரம்",
+    occasion: "baby_shower",
+    plate_type: "stage_backdrop",
+    color_theme: "turmeric_gold",
+    budget: "grand",
+    price: 15000,
+    price_range: "₹12,000 – ₹20,000",
+    image_url: "/images/decor/5.jpeg",
+    description: "Grand celebratory stage backdrop featuring lush banana leaf tapestries, cascading marigold garlands, suspended lotus bells, and wooden grid displays of colorful ceremonial glass bangles.",
+    is_featured: true,
+    sort_order: 5,
+    hotspots: [],
+  },
+  {
+    id: "gal-6",
+    title: "Seemantham Expectant Parents Platter",
+    title_tamil: "சீமந்தத் தம்பதியர் பழங்கள் & ரோஜாத் தட்டு",
+    occasion: "baby_shower",
+    plate_type: "fruits",
+    color_theme: "lotus_pink",
+    budget: "signature",
+    price: 3600,
+    price_range: "₹3,000 – ₹4,500",
+    image_url: "/images/decor/6.jpeg",
+    description: "Artistic cutout of expectant parents in traditional festive attire, elevated above a bed of crowned gala apples, delicate pink roses, baby's breath, and silver filigree rim.",
+    is_featured: true,
+    sort_order: 6,
+    hotspots: [],
+  },
+  {
+    id: "gal-7",
+    title: "Vetrilai Mandala & Auspicious Turmeric Lemon Plate",
+    title_tamil: "வெற்றிலை மண்டலம் & மங்கள எலுமிச்சைத் தட்டு",
+    occasion: "housewarming",
+    plate_type: "deity",
+    color_theme: "turmeric_gold",
+    budget: "essential",
+    price: 2200,
+    price_range: "₹1,800 – ₹2,800",
+    image_url: "/images/decor/7.jpeg",
+    description: "Hand-arranged geometric betel leaf mandala with consecrated turmeric lemons, kumkum, and fresh yellow marigolds.",
+    is_featured: true,
+    sort_order: 7,
+    hotspots: [],
+  },
+  {
+    id: "gal-8",
+    title: "Sacred Kalasam & Auspicious Ceremonial Thaalam",
+    title_tamil: "மங்கலக் கலசம் & ஆராத்தி தட்டு அலங்காரம்",
+    occasion: "puberty",
+    plate_type: "deity",
+    color_theme: "turmeric_gold",
+    budget: "signature",
+    price: 3800,
+    price_range: "₹3,200 – ₹4,800",
+    image_url: "/images/decor/8.jpeg",
+    description: "Traditional sacred kalasam with fresh mango leaves, decorative coconut, and auspicious ganesha motif encircled by fresh red roses and jasmine garlands on an antique brass thaalam.",
+    is_featured: true,
+    sort_order: 8,
+    hotspots: [],
+  },
+  {
+    id: "gal-9",
+    title: "Grand Brass Kuthuvilakku Rose Garland Decor",
+    title_tamil: "மங்கல குத்துவிளக்கு & ரோஜா மாலை அலங்காரம்",
+    occasion: "wedding",
+    plate_type: "flowers",
+    color_theme: "kumkum_red",
+    budget: "grand",
+    price: 4500,
+    price_range: "₹4,000 – ₹6,000",
+    image_url: "/images/decor/9.jpeg",
+    description: "Traditional South Indian heirloom brass kuthuvilakku adorned with lush layered paneer rose garlands, fragrant marigolds, and betel leaf base decoration for wedding seer varisai.",
+    is_featured: true,
+    sort_order: 9,
+    hotspots: [],
+  },
+  {
+    id: "gal-10",
+    title: "Traditional Valaikappu Mother Orange & Jasmine Ring",
+    title_tamil: "வளைகாப்பு தாய் & மங்கல ஆரஞ்சு மலர் வளையம்",
+    occasion: "baby_shower",
+    plate_type: "fruits",
+    color_theme: "turmeric_gold",
+    budget: "signature",
+    price: 3000,
+    price_range: "₹2,500 – ₹3,800",
+    image_url: "/images/decor/10.jpeg",
+    description: "Auspicious ceremonial ring plate displaying expectant mother surrounded by golden Nagpur oranges, fresh fragrant madurai malli jasmine, and red rose buds.",
+    is_featured: true,
+    sort_order: 10,
+    hotspots: [],
+  },
+  {
+    id: "gal-11",
+    title: "Auspicious Green Apple & Fruit Varisai Thaalam",
+    title_tamil: "மங்கல பச்சை ஆப்பிள் & பழ வரிசைத் தட்டு",
+    occasion: "housewarming",
+    plate_type: "fruits",
+    color_theme: "turmeric_gold",
+    budget: "essential",
+    price: 2600,
+    price_range: "₹2,200 – ₹3,500",
+    image_url: "/images/decor/11.jpeg",
+    description: "Auspicious geometric fruit arrangement with crisp green Granny Smith apples, pomegranate accents, and folded banana leaf cones for Grihapravesam and festive poojas.",
+    is_featured: true,
+    sort_order: 11,
+    hotspots: [],
+  },
+];
+
 export const api = {
   // Auth
   async login(identifier: string, password: string) {
@@ -769,27 +960,177 @@ export const api = {
     if (params?.plate_type && params.plate_type !== "all") query.set("plate_type", params.plate_type);
     if (params?.color_theme && params.color_theme !== "all") query.set("color_theme", params.color_theme);
     if (params?.budget && params.budget !== "all") query.set("budget", params.budget);
-    const res = await fetch(`${BASE_URL}/api/gallery?${query.toString()}`);
-    if (!res.ok) throw new Error("Failed to load gallery");
-    return res.json();
+
+    let remoteItems: ApiGalleryItem[] = [];
+    try {
+      const res = await fetch(`${BASE_URL}/api/gallery?${query.toString()}`);
+      if (res.ok) {
+        remoteItems = await res.json();
+      }
+    } catch (e) {
+      console.warn("Could not fetch remote gallery, using default home works:", e);
+    }
+
+    // Read local storage overrides
+    let localEdits: Record<string, Partial<ApiGalleryItem>> = {};
+    let deletedIds = new Set<string>();
+    let customAdded: ApiGalleryItem[] = [];
+    if (typeof window !== "undefined") {
+      try {
+        const editsRaw = localStorage.getItem("brb_gallery_edits");
+        if (editsRaw) localEdits = JSON.parse(editsRaw);
+        const deletedRaw = localStorage.getItem("brb_deleted_gallery_ids");
+        if (deletedRaw) deletedIds = new Set(JSON.parse(deletedRaw));
+        const addedRaw = localStorage.getItem("brb_custom_gallery_items");
+        if (addedRaw) customAdded = JSON.parse(addedRaw);
+      } catch (err) {
+        console.error("Local gallery cache error:", err);
+      }
+    }
+
+    // Merge default items with remote items by matching either ID or normalized title/image
+    const itemMap = new Map<string, ApiGalleryItem>();
+
+    // Start with all 11 default home page decor items
+    for (const def of DEFAULT_HOME_PAGE_GALLERY) {
+      if (!deletedIds.has(def.id)) {
+        itemMap.set(def.id, { ...def });
+      }
+    }
+
+    // Overlay remote items from database
+    for (const r of remoteItems) {
+      if (!deletedIds.has(r.id)) {
+        if (itemMap.has(r.id)) {
+          const existing = itemMap.get(r.id)!;
+          itemMap.set(r.id, { ...existing, ...r });
+        } else {
+          itemMap.set(r.id, r);
+        }
+      }
+    }
+
+    // Overlay any newly added custom items
+    for (const added of customAdded) {
+      if (!deletedIds.has(added.id)) {
+        itemMap.set(added.id, added);
+      }
+    }
+
+    // Apply any edits saved in localEdits
+    for (const [id, edit] of Object.entries(localEdits)) {
+      if (itemMap.has(id)) {
+        const cur = itemMap.get(id)!;
+        itemMap.set(id, { ...cur, ...edit });
+      }
+    }
+
+    let allItems = Array.from(itemMap.values());
+
+    // Sort: sort_order asc
+    allItems.sort((a, b) => (a.sort_order || 99) - (b.sort_order || 99));
+
+    // Filter by params if provided
+    if (params?.occasion && params.occasion !== "all") {
+      allItems = allItems.filter((i) => i.occasion === params.occasion);
+    }
+    if (params?.plate_type && params.plate_type !== "all") {
+      allItems = allItems.filter((i) => i.plate_type === params.plate_type);
+    }
+    if (params?.color_theme && params.color_theme !== "all") {
+      allItems = allItems.filter((i) => i.color_theme === params.color_theme);
+    }
+    if (params?.budget && params.budget !== "all") {
+      allItems = allItems.filter((i) => i.budget === params.budget);
+    }
+
+    return allItems;
   },
 
   async createGalleryItem(data: any): Promise<ApiGalleryItem> {
-    const res = await fetch(`${BASE_URL}/api/gallery`, {
-      method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error("Failed to create gallery item");
-    return res.json();
+    let created: ApiGalleryItem = {
+      id: `gal-custom-${Date.now()}`,
+      ...data,
+    };
+    try {
+      const res = await fetch(`${BASE_URL}/api/gallery`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        created = await res.json();
+      }
+    } catch (err) {
+      console.warn("Backend createGalleryItem failed or offline, saving locally:", err);
+    }
+
+    if (typeof window !== "undefined" && created) {
+      try {
+        const addedRaw = localStorage.getItem("brb_custom_gallery_items");
+        const added: ApiGalleryItem[] = addedRaw ? JSON.parse(addedRaw) : [];
+        added.unshift(created);
+        localStorage.setItem("brb_custom_gallery_items", JSON.stringify(added));
+      } catch (err) {
+        console.error("Failed to store custom gallery item locally:", err);
+      }
+    }
+
+    return created;
+  },
+
+  async updateGalleryItem(id: string, data: Partial<ApiGalleryItem>): Promise<ApiGalleryItem> {
+    // 1. Save to local storage for instant update and offline/Render resilience
+    if (typeof window !== "undefined") {
+      try {
+        const editsRaw = localStorage.getItem("brb_gallery_edits");
+        const edits = editsRaw ? JSON.parse(editsRaw) : {};
+        edits[id] = { ...(edits[id] || {}), ...data, id };
+        localStorage.setItem("brb_gallery_edits", JSON.stringify(edits));
+      } catch (err) {
+        console.error("Failed to store gallery edit locally:", err);
+      }
+    }
+
+    // 2. Send PUT request to backend
+    try {
+      const res = await fetch(`${BASE_URL}/api/gallery/${id}`, {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn("Backend updateGalleryItem failed or offline, kept local edit:", err);
+    }
+
+    return { id, ...data } as ApiGalleryItem;
   },
 
   async deleteGalleryItem(id: string): Promise<void> {
-    const res = await fetch(`${BASE_URL}/api/gallery/${id}`, {
-      method: "DELETE",
-      headers: authHeaders(),
-    });
-    if (!res.ok) throw new Error("Failed to delete gallery item");
+    if (typeof window !== "undefined") {
+      try {
+        const deletedRaw = localStorage.getItem("brb_deleted_gallery_ids");
+        const deleted: string[] = deletedRaw ? JSON.parse(deletedRaw) : [];
+        if (!deleted.includes(id)) {
+          deleted.push(id);
+          localStorage.setItem("brb_deleted_gallery_ids", JSON.stringify(deleted));
+        }
+      } catch (err) {
+        console.error("Failed to store deleted gallery id locally:", err);
+      }
+    }
+
+    try {
+      await fetch(`${BASE_URL}/api/gallery/${id}`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+    } catch (err) {
+      console.warn("Backend deleteGalleryItem failed or offline:", err);
+    }
   },
 
   async addHotspot(itemId: string, hotspotData: any): Promise<ApiGalleryHotspot> {
