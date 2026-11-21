@@ -7,7 +7,7 @@ class LoginRequest(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     identifier: Optional[str] = None
-    password: str
+    password: Optional[str] = ""
 
     def get_login_identifier(self) -> str:
         return (self.identifier or self.phone or self.username or self.email or "").strip()
@@ -16,7 +16,7 @@ class LoginRequest(BaseModel):
 class RegisterRequest(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
-    password: str
+    password: Optional[str] = ""
     full_name: Optional[str] = None
     phone: Optional[str] = None
 

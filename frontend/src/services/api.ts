@@ -305,117 +305,100 @@ export const api = {
     return data;
   },
 
-  async customerLogin(identifier: string, password: string) {
-    const cleanIdent = identifier.trim();
-    const cleanDigits = cleanIdent.replace(/\D/g, "");
-    const last10 = cleanDigits.slice(-10);
-    const fallbackEmail = cleanIdent.includes("@")
-      ? cleanIdent
-      : `user_${last10 || cleanDigits || "customer"}@brbdecors.com`;
+  async customerLogin(phone: string, email: string) {
+    const cleanPhone = phone.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanDigits = cleanPhone.replace(/\D/g, "");
+
+    const payload = {
+      phone: cleanPhone,
+      email: cleanEmail,
+      identifier: cleanPhone,
+      username: cleanPhone,
+      password: "BRBDecorsCustomer2026",
+    };
 
     let resData: any = null;
     try {
       const res = await fetch(`${BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: cleanIdent, phone: cleanIdent, username: cleanIdent, password }),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         resData = await res.json();
-      } else if (!cleanIdent.includes("@") && cleanDigits.length >= 10) {
-        // Fallback for legacy backend schema matching synthetic email
-        const retryRes = await fetch(`${BASE_URL}/api/auth/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ identifier: fallbackEmail, email: fallbackEmail, password }),
-        });
-        if (retryRes.ok) {
-          resData = await retryRes.json();
-        } else {
-          const err = await res.json().catch(() => ({}));
-          const local = getPersistentCustomer(cleanIdent);
-          if (local && local.password === password) {
-            resData = {
-              access_token: local.token || `local_tok_${Date.now()}`,
-              user_username: local.phone,
-              user_email: local.email,
-              user_name: local.full_name,
-              user_phone: local.phone,
-              user_role: "customer",
-            };
-          } else {
-            throw new Error(extractErrorMessage(err, "Incorrect mobile number or password"));
-          }
-        }
       } else {
         const err = await res.json().catch(() => ({}));
-        const local = getPersistentCustomer(cleanIdent);
-        if (local && local.password === password) {
+        const local = getPersistentCustomer(cleanPhone) || getPersistentCustomer(cleanEmail);
+        if (local) {
           resData = {
             access_token: local.token || `local_tok_${Date.now()}`,
             user_username: local.phone,
-            user_email: local.email,
+            user_email: cleanEmail || local.email,
             user_name: local.full_name,
-            user_phone: local.phone,
+            user_phone: cleanPhone || local.phone,
             user_role: "customer",
           };
         } else {
-          throw new Error(extractErrorMessage(err, "Incorrect mobile number or password"));
+          throw new Error(
+            extractErrorMessage(
+              err,
+              "No account found matching this mobile number and email. Please check your details or create an account."
+            )
+          );
         }
       }
     } catch (e: any) {
-      const local = getPersistentCustomer(cleanIdent);
-      if (local && local.password === password) {
+      const local = getPersistentCustomer(cleanPhone) || getPersistentCustomer(cleanEmail);
+      if (local) {
         resData = {
           access_token: local.token || `local_tok_${Date.now()}`,
           user_username: local.phone,
-          user_email: local.email,
+          user_email: cleanEmail || local.email,
           user_name: local.full_name,
-          user_phone: local.phone,
+          user_phone: cleanPhone || local.phone,
           user_role: "customer",
         };
       } else {
-        throw new Error(e.message || "Login failed");
+        throw new Error(e.message || "Sign in failed. Please check your mobile number and email.");
       }
     }
 
     const user: CustomerUser = {
-      username: resData.user_username || cleanIdent,
-      email: resData.user_email,
-      full_name: resData.user_name || cleanIdent,
-      phone: resData.user_phone || cleanIdent,
+      username: resData.user_username || cleanPhone,
+      email: resData.user_email || cleanEmail,
+      full_name: resData.user_name || cleanPhone,
+      phone: resData.user_phone || cleanPhone,
       role: resData.user_role || "customer",
     };
     setCustomerToken(resData.access_token, user);
     savePersistentCustomer({
-      phone: user.phone || cleanIdent,
-      full_name: user.full_name || cleanIdent,
-      email: user.email,
-      password,
+      phone: cleanPhone,
+      full_name: user.full_name || cleanPhone,
+      email: cleanEmail,
       token: resData.access_token,
       created_at: new Date().toISOString(),
     });
     return { token: resData.access_token, user };
   },
 
-  async customerRegister(data: { phone: string; password: string; full_name?: string; email?: string; username?: string }) {
+  async customerRegister(data: { full_name: string; phone: string; email: string }) {
     const cleanPhone = data.phone.trim();
-    const cleanDigits = cleanPhone.replace(/\D/g, "");
-    const email = data.email?.trim() || `user_${cleanDigits || Date.now()}@brbdecors.com`;
-    const fullName = data.full_name?.trim() || cleanPhone;
+    const cleanEmail = data.email.trim().toLowerCase();
+    const fullName = data.full_name.trim();
+
     const payload = {
       phone: cleanPhone,
       full_name: fullName,
-      email,
-      password: data.password,
+      email: cleanEmail,
       username: cleanPhone,
+      password: "BRBDecorsCustomer2026",
     };
 
     savePersistentCustomer({
       phone: cleanPhone,
       full_name: fullName,
-      email,
-      password: data.password,
+      email: cleanEmail,
       created_at: new Date().toISOString(),
     });
 
@@ -439,7 +422,7 @@ export const api = {
       resData = {
         access_token: `cust_local_${Date.now()}`,
         user_username: cleanPhone,
-        user_email: email,
+        user_email: cleanEmail,
         user_name: fullName,
         user_phone: cleanPhone,
         user_role: "customer",
@@ -448,7 +431,7 @@ export const api = {
 
     const user: CustomerUser = {
       username: resData.user_username || cleanPhone,
-      email: resData.user_email,
+      email: resData.user_email || cleanEmail,
       full_name: resData.user_name || fullName,
       phone: resData.user_phone || cleanPhone,
       role: resData.user_role || "customer",
@@ -457,8 +440,7 @@ export const api = {
     savePersistentCustomer({
       phone: cleanPhone,
       full_name: user.full_name || fullName,
-      email: user.email,
-      password: data.password,
+      email: cleanEmail,
       token: resData.access_token,
       created_at: new Date().toISOString(),
     });

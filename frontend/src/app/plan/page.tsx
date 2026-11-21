@@ -113,7 +113,6 @@ function PlatePlannerInner() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<"register" | "login">("register");
   const [authIdentifier, setAuthIdentifier] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
   const [authFullName, setAuthFullName] = useState("");
   const [authPhone, setAuthPhone] = useState("");
   const [authEmail, setAuthEmail] = useState("");
@@ -417,7 +416,7 @@ function PlatePlannerInner() {
     setAuthError(null);
     setAuthLoading(true);
     try {
-      const res = await api.customerLogin(authIdentifier, authPassword);
+      const res = await api.customerLogin(authIdentifier, authEmail);
       setShowAuthModal(false);
       setFormData((prev) => ({
         ...prev,
@@ -427,7 +426,7 @@ function PlatePlannerInner() {
       }));
       await executeBookingOrder(res.user);
     } catch (err: any) {
-      setAuthError(err.message || "Invalid username or password");
+      setAuthError(err.message || "No account found matching this mobile number and email.");
     } finally {
       setAuthLoading(false);
     }
@@ -442,7 +441,6 @@ function PlatePlannerInner() {
         full_name: authFullName,
         phone: authPhone,
         email: authEmail,
-        password: authPassword,
       });
       setShowAuthModal(false);
       setFormData((prev) => ({
@@ -1623,29 +1621,14 @@ function PlatePlannerInner() {
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
                     <Mail className="w-3 h-3 text-[#E9A62B]" />
-                    <span>Email Address <span className="text-[10px] text-[#635166] font-normal">(Optional)</span></span>
+                    <span>Email Address *</span>
                   </label>
                   <input
                     type="email"
-                    placeholder="e.g. anand@gmail.com (Optional)"
+                    placeholder="e.g. anand@gmail.com"
                     value={authEmail}
                     onChange={(e) => setAuthEmail(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E]"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
-                    <Lock className="w-3 h-3 text-[#E9A62B]" />
-                    <span>Create Password (min. 6 characters) *</span>
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="Secure password"
-                    value={authPassword}
-                    onChange={(e) => setAuthPassword(e.target.value)}
                     required
-                    minLength={6}
                     className="w-full px-3 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E]"
                   />
                 </div>
@@ -1679,24 +1662,15 @@ function PlatePlannerInner() {
                 </div>
 
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
-                      <Lock className="w-3 h-3 text-[#E9A62B]" />
-                      <span>Password *</span>
-                    </label>
-                    <Link
-                      href="/login?mode=forgot"
-                      target="_blank"
-                      className="text-[10px] text-[#8B5E14] hover:underline"
-                    >
-                      Forgot Password?
-                    </Link>
-                  </div>
+                  <label className="text-[11px] font-semibold text-[#2B1A2E] flex items-center gap-1">
+                    <Mail className="w-3 h-3 text-[#E9A62B]" />
+                    <span>Email Address *</span>
+                  </label>
                   <input
-                    type="password"
-                    placeholder="Enter password"
-                    value={authPassword}
-                    onChange={(e) => setAuthPassword(e.target.value)}
+                    type="email"
+                    placeholder="e.g. anand@gmail.com"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
                     required
                     className="w-full px-3 py-2 rounded-xl border border-[#E8DAC8] bg-[#FAF3E7] text-xs text-[#2B1A2E]"
                   />

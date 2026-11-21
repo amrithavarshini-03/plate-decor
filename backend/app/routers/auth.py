@@ -30,29 +30,25 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 @router.post("/login", response_model=Token)
 def login(credentials: LoginRequest, db: Session = Depends(get_db)):
     ident = credentials.get_login_identifier()
-    if not ident:
+    phone_input = (credentials.phone or ident or "").strip()
+    email_input = (credentials.email or (ident if "@" in ident else "")).strip().lower()
+
+    if not phone_input and not email_input:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Mobile number or email is required",
+            detail="Mobile number and email address are required",
         )
 
-    # Allow login by phone number, email or username
-    digits = "".join(c for c in ident if c.isdigit())
+    digits = "".join(c for c in phone_input if c.isdigit())
     user = None
     if len(digits) >= 10:
         last_10 = digits[-10:]
         user = db.query(User).filter(User.phone.like(f"%{last_10}%")).first()
-        if not user:
-            user = (
-                db.query(User)
-                .filter(
-                    (User.email.ilike(f"user_{last_10}@brbdecors.com"))
-                    | (User.email.ilike(f"user_{digits}@brbdecors.com"))
-                    | (User.username.ilike(f"user_{last_10}"))
-                    | (User.username.ilike(f"user_{digits}"))
-                )
-                .first()
-            )
+        if not user and email_input:
+            user = db.query(User).filter(User.email.ilike(email_input)).first()
+    elif email_input:
+        user = db.query(User).filter(User.email.ilike(email_input)).first()
+
     if not user:
         user = (
             db.query(User)
@@ -64,12 +60,31 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
             .first()
         )
 
-    if not user or not verify_password(credentials.password, user.password_hash):
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect mobile number or password",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="No account found matching this mobile number and email. Please create an account.",
         )
+
+    # Admin requires password verification; Customers log in passwordless via phone & email
+    if user.role == "admin":
+        if not credentials.password or not verify_password(credentials.password, user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect admin username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    else:
+        # For customers, if email was provided and user previously had a placeholder email, update it
+        if email_input and (user.email.startswith("user_") or not user.email):
+            user.email = email_input
+            db.commit()
+        elif email_input and user.email.lower() != email_input and not user.email.startswith("user_"):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="The email address does not match this mobile number. Please check your details.",
+            )
+
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -98,33 +113,32 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
 def register(req: RegisterRequest, db: Session = Depends(get_db)):
     clean_phone = req.phone.strip() if req.phone else (req.username.strip() if req.username else None)
     clean_digits = "".join(c for c in clean_phone if c.isdigit()) if clean_phone else ""
+    clean_email = req.email.strip().lower() if req.email else None
 
-    if not clean_digits and not req.email:
+    if not clean_digits:
         raise HTTPException(status_code=400, detail="Mobile number is required")
+    if not clean_email or "@" not in clean_email:
+        raise HTTPException(status_code=400, detail="Valid email address is required")
 
     # Check if mobile already exists
-    if clean_digits:
-        last_10 = clean_digits[-10:] if len(clean_digits) >= 10 else clean_digits
-        existing_phone = db.query(User).filter(User.phone.like(f"%{last_10}%")).first()
-        if existing_phone:
-            raise HTTPException(status_code=400, detail="An account with this mobile number already exists. Please sign in.")
-
-    clean_email = req.email.strip().lower() if req.email else f"user_{clean_digits or random.randint(100000, 999999)}@brbdecors.com"
-    clean_username = f"user_{clean_digits}" if clean_digits else clean_email.split("@")[0]
-
-    if len(req.password) < 6:
-        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    last_10 = clean_digits[-10:] if len(clean_digits) >= 10 else clean_digits
+    existing_phone = db.query(User).filter(User.phone.like(f"%{last_10}%")).first()
+    if existing_phone:
+        raise HTTPException(status_code=400, detail="An account with this mobile number already exists. Please sign in.")
 
     existing_email = db.query(User).filter(User.email.ilike(clean_email)).first()
     if existing_email:
-        clean_email = f"user_{clean_digits}_{random.randint(100, 999)}@brbdecors.com"
+        raise HTTPException(status_code=400, detail="An account with this email address already exists. Please sign in.")
+
+    clean_username = f"user_{clean_digits}"
+    default_pwd = req.password if (req.password and len(req.password) >= 6) else "BRBDecorsCustomer2026"
 
     new_user = User(
         username=clean_username,
         email=clean_email,
         full_name=req.full_name.strip() if req.full_name else clean_phone,
         phone=clean_phone,
-        password_hash=get_password_hash(req.password),
+        password_hash=get_password_hash(default_pwd),
         role="customer",
         is_active=True,
     )
@@ -136,6 +150,17 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     access_token = create_access_token(
         data={"sub": new_user.email, "role": new_user.role},
         expires_delta=access_token_expires,
+    )
+
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user_email=new_user.email,
+        user_username=new_user.username,
+        user_role=new_user.role,
+        user_name=new_user.full_name,
+        user_phone=new_user.phone,
     )
 
     return Token(
