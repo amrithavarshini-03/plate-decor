@@ -110,6 +110,7 @@ export interface CustomerUser {
   username: string;
   email: string;
   full_name?: string;
+  phone?: string;
   role: string;
 }
 
@@ -162,6 +163,63 @@ export function removeCustomerToken(): void {
     localStorage.removeItem("brb_customer_token");
     localStorage.removeItem("brb_customer_user");
   }
+}
+
+// Local order cache helpers (guarantees orders & quotes persist seamlessly even if backend offline)
+export function saveCustomerOrderId(id: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const existing: string[] = JSON.parse(localStorage.getItem("brb_customer_order_ids") || "[]");
+    if (!existing.includes(id)) {
+      existing.unshift(id);
+      localStorage.setItem("brb_customer_order_ids", JSON.stringify(existing));
+    }
+  } catch {}
+}
+
+export function getCustomerOrderIds(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem("brb_customer_order_ids") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+export function saveLocalBooking(booking: ApiBooking): void {
+  if (typeof window === "undefined") return;
+  try {
+    const existing: ApiBooking[] = JSON.parse(localStorage.getItem("brb_local_bookings") || "[]");
+    const idx = existing.findIndex((b) => b.id === booking.id);
+    if (idx >= 0) {
+      existing[idx] = booking;
+    } else {
+      existing.unshift(booking);
+    }
+    localStorage.setItem("brb_local_bookings", JSON.stringify(existing));
+    saveCustomerOrderId(booking.id);
+  } catch {}
+}
+
+export function getLocalBookings(): ApiBooking[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem("brb_local_bookings") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+export function updateLocalBookingStatus(id: string, status: ApiBooking["status"]): void {
+  if (typeof window === "undefined") return;
+  try {
+    const existing: ApiBooking[] = JSON.parse(localStorage.getItem("brb_local_bookings") || "[]");
+    const found = existing.find((b) => b.id === id);
+    if (found) {
+      found.status = status;
+      localStorage.setItem("brb_local_bookings", JSON.stringify(existing));
+    }
+  } catch {}
 }
 
 // Headers helper
@@ -269,7 +327,81 @@ export const api = {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.detail || "Failed to submit booking");
     }
-    return res.json();
+    const data = await res.json();
+    saveLocalBooking(data);
+    return data;
+  },
+
+  async getMyOrders(params?: { email?: string; phone?: string; orderIds?: string[] }): Promise<ApiBooking[]> {
+    const local = getLocalBookings();
+    const storedIds = params?.orderIds && params.orderIds.length > 0 ? params.orderIds : getCustomerOrderIds();
+
+    try {
+      const query = new URLSearchParams();
+      if (params?.email) query.set("email", params.email);
+      if (params?.phone) query.set("phone", params.phone);
+      if (storedIds.length > 0) query.set("order_ids", storedIds.join(","));
+
+      const res = await fetch(`${BASE_URL}/api/bookings/my-orders?${query.toString()}`, {
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        const remote: ApiBooking[] = await res.json();
+        const mergedMap = new Map<string, ApiBooking>();
+        local.forEach((b) => mergedMap.set(b.id, b));
+        remote.forEach((b) => {
+          const loc = mergedMap.get(b.id);
+          mergedMap.set(b.id, { ...loc, ...b });
+          saveLocalBooking({ ...loc, ...b });
+        });
+        return Array.from(mergedMap.values());
+      }
+    } catch {
+      // Fallback to local bookings if offline or network error
+    }
+    return local;
+  },
+
+  async cancelBooking(id: string, reason?: string): Promise<ApiBooking> {
+    updateLocalBookingStatus(id, "cancelled");
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/bookings/${id}/cancel${reason ? `?reason=${encodeURIComponent(reason)}` : ""}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      if (res.ok) {
+        const updated = await res.json();
+        saveLocalBooking(updated);
+        return updated;
+      }
+    } catch {}
+
+    const local = getLocalBookings().find((b) => b.id === id);
+    if (local) {
+      local.status = "cancelled";
+      return local;
+    }
+    return {
+      id,
+      customer_name: "Customer",
+      phone: "",
+      city: "Chennai",
+      function_date: "",
+      occasion: "",
+      service_type: "full_service",
+      plate_count: 5,
+      plate_types: [],
+      stage_required: false,
+      theme_colors: [],
+      status: "cancelled",
+      deposit_paid: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      inspirations: [],
+    };
   },
 
   async getBookings(params?: { status?: string; search?: string }): Promise<ApiBooking[]> {

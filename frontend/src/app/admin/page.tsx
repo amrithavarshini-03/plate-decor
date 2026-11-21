@@ -224,14 +224,55 @@ export default function AdminDashboardPage() {
     e.preventDefault();
     if (!selectedBooking) return;
     const amount = parseFloat(quoteInput);
-    if (isNaN(amount) || amount <= 0) return;
+    if (isNaN(amount) || amount <= 0) {
+      showToast("Please enter a valid quote amount in ₹");
+      return;
+    }
     try {
       const updated = await api.updateBookingQuote(selectedBooking.id, amount, quoteNotes);
       setBookings((prev) => prev.map((b) => (b.id === selectedBooking.id ? updated : b)));
       setSelectedBooking(updated);
       setQuoteInput("");
       setQuoteNotes("");
-      showToast(`Formal quote of ₹${amount.toLocaleString("en-IN")} submitted!`);
+
+      // Automatically construct and open formal quote via WhatsApp to the customer
+      const advance = Math.round(amount * 0.5);
+      const cleanPhone = selectedBooking.phone.replace(/[^0-9]/g, "");
+      const fullPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+
+      const occasionTitle = selectedBooking.occasion
+        ? selectedBooking.occasion
+            .split("_")
+            .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(" ")
+        : "Ceremony";
+      const serviceTitle =
+        selectedBooking.service_type === "diy" ? "Decoration Only (Customer supplies items)" : "Full-Service Decoration (All-inclusive)";
+
+      const waMessage = 
+`Vanakkam ${selectedBooking.customer_name}! 🙏
+
+Thank you for choosing BRB Decors for your upcoming celebration. Here are your formal quotation details:
+
+📋 *Formal Quotation* (Order Ref: ${selectedBooking.id})
+• Ceremony: ${occasionTitle}
+• Date: ${selectedBooking.function_date}
+• Plate Requirement: ${selectedBooking.plate_count} Arranged Plates (${serviceTitle})
+${selectedBooking.plate_types?.length ? `• Plate Varieties: ${selectedBooking.plate_types.join(", ")}\n` : ""}
+💰 *Total Quoted Amount*: ₹${amount.toLocaleString("en-IN")}
+💵 *50% Advance to Reserve Slot*: ₹${advance.toLocaleString("en-IN")}
+💵 *50% Balance on Event Day*: ₹${advance.toLocaleString("en-IN")}
+${quoteNotes ? `\n📝 *Artisan Notes*: ${quoteNotes}\n` : ""}
+💳 *Payment*: 50% advance secures your auspicious date and decorator materials. Balance is payable on event day at the venue.
+
+You can also view this quote and track your order anytime on our website under 'My Orders'.
+
+Please reply here to confirm your booking or if you need any customizations! ✨
+— BRB Decors (8056343769)`;
+
+      const waUrl = `https://wa.me/${fullPhone}?text=${encodeURIComponent(waMessage)}`;
+      window.open(waUrl, "_blank");
+      showToast(`Formal quote of ₹${amount.toLocaleString("en-IN")} saved & WhatsApp opened!`);
     } catch (err: any) {
       showToast(err.message || "Failed to submit quote");
     }
@@ -1373,10 +1414,26 @@ export default function AdminDashboardPage() {
                       href={insp.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-20 h-20 rounded-xl overflow-hidden border border-[#E8DAC8] shrink-0 block relative group"
+                      className="w-20 h-20 rounded-xl overflow-hidden border border-[#E8DAC8] bg-[#FAF5EE] shrink-0 block relative group text-center"
+                      title={insp.preview_title || `Inspiration #${i + 1}`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={insp.url} alt="Inspiration" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                      <img
+                        src={insp.url}
+                        alt={insp.preview_title || "Inspiration"}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLElement;
+                          target.style.display = "none";
+                          const parent = target.parentElement;
+                          if (parent && !parent.querySelector(".fallback-label")) {
+                            const d = document.createElement("div");
+                            d.className = "fallback-label w-full h-full flex flex-col items-center justify-center p-1 text-[10px] text-[#2F5D3A] font-semibold";
+                            d.innerHTML = "🌸 <span>Inspiration</span>";
+                            parent.appendChild(d);
+                          }
+                        }}
+                      />
                     </a>
                   ))}
                 </div>
@@ -1421,12 +1478,17 @@ export default function AdminDashboardPage() {
                   />
                 </div>
               </div>
-              <div className="flex justify-end pt-1">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-1">
+                <span className="text-[11px] text-[#635166] flex items-center gap-1.5">
+                  <MessageCircle className="w-3.5 h-3.5 text-[#2F5D3A]" />
+                  <span>Submitting saves the quote & opens WhatsApp to <strong>{selectedBooking.phone}</strong></span>
+                </span>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-full bg-[#2F5D3A] text-white text-xs font-semibold hover:bg-[#214229] transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#2F5D3A] text-white text-xs font-semibold hover:bg-[#214229] transition-all shadow-xs"
                 >
-                  Send Formal Quote
+                  <MessageCircle className="w-4 h-4 text-[#E9A62B]" />
+                  <span>Send Formal Quote & WhatsApp</span>
                 </button>
               </div>
             </form>

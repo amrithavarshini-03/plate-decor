@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Sparkles,
   ArrowRight,
@@ -23,7 +24,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import { SITE_CONFIG } from "@/config/site.config";
 import { PetalButton } from "@/components/primitives/PetalButton";
 import { triggerGrandPetalShower } from "@/components/primitives/PetalBurst";
-import { api, getCustomerUser } from "@/services/api";
+import { api, getCustomerUser, saveCustomerOrderId, saveLocalBooking, getCustomerOrderIds } from "@/services/api";
+import { MOCK_GALLERY } from "@/data/mockData";
 
 export interface UploadedImage {
   url: string;
@@ -73,11 +75,24 @@ const INITIAL_STATE: BookingFormState = {
   specialNotes: "",
   deityTheme: "",
   uploadedImages: [],
-  budgetEstimate: "₹8,500 - ₹14,000",
+  budgetEstimate: "Formal Quote on Review",
 };
 
-export default function PlatePlannerPage() {
+function PlatePlannerInner() {
   const { language, t } = useLanguage();
+  const searchParams = useSearchParams();
+  const templateParam = searchParams.get("template");
+  const occasionParam = searchParams.get("occasion");
+  const imgParam = searchParams.get("img");
+  const titleParam = searchParams.get("title");
+
+  const [selectedTemplate, setSelectedTemplate] = useState<{
+    id: string;
+    title: string;
+    image: string;
+    occasion?: string;
+  } | null>(null);
+
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<BookingFormState>(INITIAL_STATE);
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -87,6 +102,38 @@ export default function PlatePlannerPage() {
   const [submitting, setSubmitting] = useState(false);
   const [bookingReference, setBookingReference] = useState<string>("");
   const [shopPreference, setShopPreference] = useState<"now" | "later" | null>(null);
+  const [hasExistingOrders, setHasExistingOrders] = useState(false);
+
+  // Sync template from URL query params (e.g. from /gallery "Plan one like this")
+  useEffect(() => {
+    if (templateParam || imgParam) {
+      const match = templateParam ? MOCK_GALLERY.find((item) => item.id === templateParam) : null;
+      const img = imgParam || match?.imageUrl || "";
+      const title = titleParam || match?.title || "Custom Ceremonial Plating";
+      const occ = occasionParam || match?.occasion || undefined;
+
+      setSelectedTemplate({
+        id: templateParam || "custom-gallery",
+        title,
+        image: img,
+        occasion: occ,
+      });
+
+      if (occ) {
+        setFormData((prev) => ({
+          ...prev,
+          occasion: occ,
+        }));
+      }
+    }
+  }, [templateParam, occasionParam, imgParam, titleParam]);
+
+  useEffect(() => {
+    const ids = getCustomerOrderIds();
+    if (ids.length > 0) {
+      setHasExistingOrders(true);
+    }
+  }, []);
 
   // Pre-fill logged-in customer info
   useEffect(() => {
@@ -158,29 +205,8 @@ export default function PlatePlannerPage() {
     }
   }, [formData]);
 
-  // Pricing & 50-50 milestone breakdown calculations (mock rates; actual DB rates can be plugged in later)
-  const basePerPlate = formData.serviceType === "full_service" ? 1800 : 450;
-  const plateTotal = formData.plateCount * basePerPlate;
-  const stageCost = formData.stageRequired ? 12000 : 0;
-  const minTotal = Math.round(plateTotal + stageCost);
-  const maxTotal = Math.round(minTotal * 1.35);
-
-  const advanceMin = Math.round(minTotal * 0.5);
-  const advanceMax = Math.round(maxTotal * 0.5);
-  const balanceMin = minTotal - advanceMin;
-  const balanceMax = maxTotal - advanceMax;
-
-  const estimatedRangeStr = `₹${minTotal.toLocaleString("en-IN")} - ₹${maxTotal.toLocaleString("en-IN")}`;
-  const advanceRangeStr = `₹${advanceMin.toLocaleString("en-IN")} - ₹${advanceMax.toLocaleString("en-IN")}`;
-  const balanceRangeStr = `₹${balanceMin.toLocaleString("en-IN")} - ₹${balanceMax.toLocaleString("en-IN")}`;
-
-  // Keep budgetEstimate in sync for persistence
-  useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      budgetEstimate: estimatedRangeStr,
-    }));
-  }, [formData.plateCount, formData.serviceType, formData.stageRequired]);
+  // Pricing: Quoted formally by BRB Decors artisans upon review based on plate count and fresh florals
+  const quoteStatusStr = "Formal Quote on Review";
 
   const updateField = <K extends keyof BookingFormState>(field: K, val: BookingFormState[K]) => {
     setFormData((prev) => ({ ...prev, [field]: val }));
@@ -255,6 +281,22 @@ export default function PlatePlannerPage() {
         preview_title: img.name || `Client Inspiration #${i + 1}`,
       }));
 
+      // If customer selected a gallery template, include it in inspirations so admin can see it
+      if (selectedTemplate && !inspirations.some((insp) => insp.url === selectedTemplate.image)) {
+        inspirations.unshift({
+          type: "image",
+          url: selectedTemplate.image,
+          preview_title: `Selected Style: ${selectedTemplate.title}`,
+        });
+      }
+
+      const orderNotes = [
+        selectedTemplate ? `[Selected Gallery Style: ${selectedTemplate.title}]` : "",
+        formData.specialNotes || "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+
       const res = await api.createBooking({
         customer_name: formData.name || "Client",
         phone: formData.phone || "Not specified",
@@ -269,14 +311,63 @@ export default function PlatePlannerPage() {
         plate_types: formData.plateTypes,
         stage_required: formData.stageRequired,
         theme_colors: formData.themeColor.trim() ? [formData.themeColor.trim()] : [],
-        notes: formData.specialNotes,
-        budget_range: `${estimatedRangeStr} (50% Advance: ${advanceRangeStr} | 50% Balance on Event Day: ${balanceRangeStr})`,
+        notes: orderNotes,
+        budget_range: "Formal Quote on Review (50% Advance to Confirm Slot, 50% Balance on Event Day)",
         inspirations,
       });
       setBookingReference(res.id);
+      saveCustomerOrderId(res.id);
+      saveLocalBooking(res);
     } catch (err) {
       console.warn("Could not post to backend API, using local reference:", err);
-      setBookingReference(`BRB-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
+      const fallbackId = `BRB-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      setBookingReference(fallbackId);
+
+      const fallbackInspirations = formData.uploadedImages.map((img, i) => ({
+        type: "image",
+        url: img.url,
+        preview_title: img.name || `Inspiration #${i + 1}`,
+      }));
+      if (selectedTemplate && !fallbackInspirations.some((insp) => insp.url === selectedTemplate.image)) {
+        fallbackInspirations.unshift({
+          type: "image",
+          url: selectedTemplate.image,
+          preview_title: `Selected Style: ${selectedTemplate.title}`,
+        });
+      }
+
+      const orderNotes = [
+        selectedTemplate ? `[Selected Gallery Style: ${selectedTemplate.title}]` : "",
+        formData.specialNotes || "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const fallbackBooking: any = {
+        id: fallbackId,
+        customer_name: formData.name || "Client",
+        phone: formData.phone || "Not specified",
+        email: formData.email,
+        city: formData.city,
+        venue: formData.venue,
+        function_date: formData.date || "Upcoming Auspicious Date",
+        occasion: formData.occasion,
+        custom_occasion: formData.customOccasion,
+        service_type: formData.serviceType,
+        plate_count: formData.plateCount,
+        plate_types: formData.plateTypes,
+        stage_required: formData.stageRequired,
+        theme_colors: formData.themeColor.trim() ? [formData.themeColor.trim()] : [],
+        notes: orderNotes,
+        budget_range: "Formal Quote on Review (50% Advance to Confirm Slot, 50% Balance on Event Day)",
+        status: "new",
+        deposit_paid: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        inspirations: fallbackInspirations,
+      };
+      saveLocalBooking(fallbackBooking);
+      saveCustomerOrderId(fallbackId);
     } finally {
       setSubmitting(false);
       setIsSubmitted(true);
@@ -296,6 +387,9 @@ export default function PlatePlannerPage() {
   const currentOccasionObj =
     occasionsList.find((o) => o.id === formData.occasion) || occasionsList[0];
 
+  const previewImage = selectedTemplate?.image || currentOccasionObj.image;
+  const previewTitle = selectedTemplate?.title || currentOccasionObj.label;
+
   const whatsappInquiryUrl = `https://wa.me/${SITE_CONFIG.whatsappNumber}?text=${encodeURIComponent(
     `Vanakkam BRB Decors! I planned a ceremonial plate set on your website:\n\n` +
     `• Reference: ${bookingReference || "Pending"}\n` +
@@ -305,11 +399,11 @@ export default function PlatePlannerPage() {
     `• Plates: ${formData.plateCount}\n` +
     `• Service: ${formData.serviceType === "full_service" ? "Full-Service (Products + Decoration)" : "Decoration Only (Customer Provides Products)"}\n` +
     `• Color Theme: ${formData.themeColor || "Open to recommendation"}\n` +
+    (selectedTemplate ? `• Selected Gallery Style: ${selectedTemplate.title}\n` : "") +
     `• Inspiration Photos: ${formData.uploadedImages.length > 0 ? `${formData.uploadedImages.length} attached` : "None"}\n` +
-    `• Estimated Investment: ${estimatedRangeStr}\n` +
-    `• 50% Advance (to reserve slot): ${advanceRangeStr}\n` +
-    `• Remaining 50% Balance (after decor on event day): ${balanceRangeStr}\n\n` +
-    `Please let me know your availability!`
+    `• Pricing: Formal Quote Requested\n` +
+    `• Payment Terms: 50% Advance to Lock Slot | 50% Balance on Event Day\n\n` +
+    `Please let me know your availability and send the formal quote!`
   )}`;
 
   return (
@@ -327,6 +421,28 @@ export default function PlatePlannerPage() {
           Every plate is arranged to match your family traditions. Build your set step-by-step.
         </p>
       </div>
+
+      {/* Existing Orders Quick Link Banner */}
+      {hasExistingOrders && !isSubmitted && (
+        <div className="max-w-4xl mx-auto mb-8 p-4 rounded-2xl bg-[#FFFDF9] border border-[#E4C580] flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3 text-xs text-[#2B1A2E]">
+            <div className="w-8 h-8 rounded-full bg-[#FAF3E7] border border-[#E4C580] flex items-center justify-center shrink-0">
+              <ShoppingBag className="w-4 h-4 text-[#2F5D3A]" />
+            </div>
+            <div>
+              <span className="font-bold text-[#2B1A2E] block">You have active ceremonial orders with BRB Decors</span>
+              <span className="text-[#635166] text-[11px]">Track review progress, view formal quotes, or manage your bookings anytime.</span>
+            </div>
+          </div>
+          <Link
+            href="/my-orders"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#2F5D3A] hover:bg-[#214229] text-white text-xs font-semibold shadow-xs transition-colors shrink-0"
+          >
+            <span>View My Orders</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
 
       {isSubmitted ? (
         // Confirmation Screen with Petal Shower
@@ -358,8 +474,11 @@ export default function PlatePlannerPage() {
 
           <div className="p-5 rounded-2xl bg-[#FAF3E7] border border-[#E4C580] text-xs text-[#2B1A2E] space-y-3 text-left">
             <div className="flex justify-between items-center border-b border-[#E4C580]/60 pb-2">
-              <span className="text-[#635166]">Total Estimated Investment</span>
-              <span className="font-bold text-sm text-[#2B1A2E]">{estimatedRangeStr}</span>
+              <span className="text-[#635166]">Quotation & Payment Status</span>
+              <span className="font-bold text-sm text-[#2F5D3A] inline-flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#E9A62B]" />
+                <span>Formal Quote in Review</span>
+              </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -367,8 +486,8 @@ export default function PlatePlannerPage() {
                 <span className="text-[10px] uppercase font-bold tracking-wider text-[#2F5D3A] block">
                   Stage 1: 50% Advance
                 </span>
-                <span className="font-serif text-base font-bold text-[#2F5D3A] block mt-0.5">
-                  {advanceRangeStr}
+                <span className="font-serif text-sm font-bold text-[#2F5D3A] block mt-0.5">
+                  Quoted upon Slot Review
                 </span>
                 <p className="text-[10px] text-[#635166] mt-1 leading-snug">
                   Paid to confirm date & lock decorator slot once slot availability is verified.
@@ -379,11 +498,11 @@ export default function PlatePlannerPage() {
                 <span className="text-[10px] uppercase font-bold tracking-wider text-[#E9A62B] block">
                   Stage 2: 50% Balance
                 </span>
-                <span className="font-serif text-base font-bold text-[#2B1A2E] block mt-0.5">
-                  {balanceRangeStr}
+                <span className="font-serif text-sm font-bold text-[#2B1A2E] block mt-0.5">
+                  Payable on Event Day
                 </span>
                 <p className="text-[10px] text-[#635166] mt-1 leading-snug">
-                  Payable on event day at the venue only after decoration work is completed.
+                  Payable at the mandapam / venue on the day of the event only after decoration work is completed.
                 </p>
               </div>
             </div>
@@ -396,20 +515,28 @@ export default function PlatePlannerPage() {
             </div>
           </div>
 
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/my-orders"
+              className="w-full sm:w-auto px-7 py-3.5 rounded-full bg-[#E9A62B] text-[#2B1A2E] font-bold text-xs flex items-center justify-center gap-2 shadow-md hover:bg-[#d8961f] transition-all"
+            >
+              <ShoppingBag className="w-4 h-4 text-[#2B1A2E]" />
+              <span>View My Orders & Quotes</span>
+            </Link>
+
             <a
               href={whatsappInquiryUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#2F5D3A] text-[#FBF6EC] font-semibold text-sm flex items-center justify-center gap-2 shadow-lg hover:bg-[#214229] transition-colors"
+              className="w-full sm:w-auto px-7 py-3.5 rounded-full bg-[#2F5D3A] text-[#FBF6EC] font-semibold text-xs flex items-center justify-center gap-2 shadow-md hover:bg-[#214229] transition-colors"
             >
               <MessageCircle className="w-4 h-4 text-[#E9A62B]" />
-              <span>Say Hello on WhatsApp</span>
+              <span>Chat on WhatsApp</span>
             </a>
 
             <Link
               href="/"
-              className="w-full sm:w-auto px-6 py-3.5 rounded-full border border-[#E8DAC8] bg-[#FFFDF9] text-xs font-semibold text-[#2B1A2E] hover:bg-[#FAF3E7]"
+              className="w-full sm:w-auto px-5 py-3.5 rounded-full border border-[#E8DAC8] bg-[#FFFDF9] text-xs font-semibold text-[#2B1A2E] hover:bg-[#FAF3E7]"
             >
               Back to Home
             </Link>
@@ -1078,10 +1205,11 @@ export default function PlatePlannerPage() {
                       </div>
                     </div>
                   )}
-                  <div className="flex justify-between pt-1">
-                    <span className="text-[#2B1A2E] font-bold text-sm">Estimated Total Range</span>
-                    <span className="font-serif text-base font-bold text-[#2B1A2E]">
-                      {estimatedRangeStr}
+                  <div className="flex justify-between items-center pt-1 border-t border-[#E8DAC8]/60 mt-1">
+                    <span className="text-[#2B1A2E] font-bold text-sm">Pricing Calculation</span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF3E7] text-xs font-serif font-bold text-[#2F5D3A] border border-[#E4C580]">
+                      <Sparkles className="w-3.5 h-3.5 text-[#E9A62B]" />
+                      <span>Formal Quote on Review</span>
                     </span>
                   </div>
                 </div>
@@ -1113,8 +1241,8 @@ export default function PlatePlannerPage() {
                           To Confirm Slot
                         </span>
                       </div>
-                      <div className="font-serif text-lg font-bold text-[#2F5D3A]">
-                        {advanceRangeStr}
+                      <div className="font-serif text-base font-bold text-[#2F5D3A]">
+                        50% of Formal Quote
                       </div>
                       <p className="text-[11px] text-[#635166] leading-relaxed">
                         Paid after our team verifies muhurtham slot availability. Reserves the lead decorator and begins artisan prep.
@@ -1131,8 +1259,8 @@ export default function PlatePlannerPage() {
                           On Event Day
                         </span>
                       </div>
-                      <div className="font-serif text-lg font-bold text-[#2B1A2E]">
-                        {balanceRangeStr}
+                      <div className="font-serif text-base font-bold text-[#2B1A2E]">
+                        50% on Event Day
                       </div>
                       <p className="text-[11px] text-[#635166] leading-relaxed">
                         Payable at the mandapam / venue on the day of the event <strong>only after</strong> all plate decoration work is fully completed.
@@ -1270,9 +1398,10 @@ export default function PlatePlannerPage() {
                 {/* Main 3D Photographic Plate with Smooth Hover Orbit */}
                 <div className="relative w-full h-full rounded-full overflow-hidden shadow-inner border border-[#E8DAC8]">
                   <Image
-                    src={currentOccasionObj.image}
-                    alt={currentOccasionObj.label}
+                    src={previewImage}
+                    alt={previewTitle}
                     fill
+                    unoptimized
                     className="object-cover transition-transform duration-700 hover:scale-105"
                   />
                 </div>
@@ -1280,24 +1409,30 @@ export default function PlatePlannerPage() {
 
               {/* Plate Counter Summary Badge */}
               <div className="pt-2">
+                {selectedTemplate && (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-2 rounded-full bg-[#FAF3E7] border border-[#E4C580] text-[11px] font-bold text-[#8B5E14]">
+                    <Sparkles className="w-3.5 h-3.5 text-[#E9A62B]" />
+                    <span>Selected Gallery Style</span>
+                  </div>
+                )}
                 <h4 className="font-serif text-lg font-bold text-[#2B1A2E]">
-                  {currentOccasionObj.label}
+                  {previewTitle}
                 </h4>
                 <p className="text-xs text-[#2F5D3A] font-semibold mt-0.5">
                   Set of {formData.plateCount} Arranged Plates
                 </p>
                 <div className="mt-3 pt-2.5 border-t border-[#E8DAC8]/60 space-y-1.5 text-left bg-[#FAF5EE] rounded-xl p-2.5">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-[#635166]">Est. Total:</span>
-                    <span className="font-bold text-[#2B1A2E]">{estimatedRangeStr}</span>
+                    <span className="text-[#635166]">Pricing Structure:</span>
+                    <span className="font-bold text-[#2F5D3A]">Formal Quote on Review</span>
                   </div>
                   <div className="flex justify-between items-center text-[11px] text-[#2F5D3A]">
                     <span className="font-semibold">50% Advance:</span>
-                    <span className="font-bold">{advanceRangeStr}</span>
+                    <span className="font-bold">To Reserve Slot</span>
                   </div>
                   <div className="flex justify-between items-center text-[11px] text-[#635166]">
                     <span>50% On Event Day:</span>
-                    <span className="font-medium text-[#2B1A2E]">{balanceRangeStr}</span>
+                    <span className="font-medium text-[#2B1A2E]">Payable after Decor</span>
                   </div>
                 </div>
               </div>
@@ -1306,5 +1441,22 @@ export default function PlatePlannerPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function PlatePlannerPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen py-24 flex items-center justify-center text-center">
+          <div className="space-y-3">
+            <div className="w-10 h-10 border-3 border-[#2F5D3A] border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs text-[#635166] font-medium">Opening Ceremonial Plate Planner...</p>
+          </div>
+        </div>
+      }
+    >
+      <PlatePlannerInner />
+    </Suspense>
   );
 }

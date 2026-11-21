@@ -2,6 +2,7 @@ import uuid
 import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, status, Query
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.entities import Booking, BookingInspiration, User
@@ -115,6 +116,70 @@ def list_bookings(
             | (Booking.city.ilike(search_pattern))
         )
     return query.order_by(Booking.created_at.desc()).offset(offset).limit(limit).all()
+
+
+@router.get("/my-orders", response_model=List[BookingOut])
+def get_my_orders(
+    email: Optional[str] = None,
+    phone: Optional[str] = None,
+    order_ids: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    """Customer endpoint: retrieve bookings by email, phone, or a list of order IDs."""
+    query = db.query(Booking)
+    filters = []
+
+    if email and email.strip():
+        filters.append(Booking.email.ilike(email.strip()))
+    if phone and phone.strip():
+        clean_phone = phone.replace("+", "").replace(" ", "").replace("-", "")
+        # Match trailing 10 digits or exact
+        match_digits = clean_phone[-10:] if len(clean_phone) >= 10 else clean_phone
+        filters.append(Booking.phone.contains(match_digits))
+    if order_ids and order_ids.strip():
+        id_list = [i.strip() for i in order_ids.split(",") if i.strip()]
+        if id_list:
+            filters.append(Booking.id.in_(id_list))
+
+    if not filters:
+        return []
+
+    return query.filter(or_(*filters)).order_by(Booking.created_at.desc()).all()
+
+
+@router.patch("/{booking_id}/cancel", response_model=BookingOut)
+def cancel_booking_customer(
+    booking_id: str,
+    reason: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    """Customer endpoint: allows a customer to cancel their booking anytime."""
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    if booking.status == "completed":
+        raise HTTPException(status_code=400, detail="Completed ceremonies cannot be cancelled")
+
+    booking.status = "cancelled"
+    timestamp = datetime.datetime.utcnow().strftime("%d %b %Y, %I:%M %p UTC")
+    cancel_note = f"[Cancelled by Customer on {timestamp}]"
+    if reason and reason.strip():
+        cancel_note += f": {reason.strip()}"
+    booking.notes = f"{booking.notes or ''}\n{cancel_note}".strip()
+    booking.updated_at = datetime.datetime.utcnow()
+
+    db.commit()
+    db.refresh(booking)
+
+    # Notify decorator of cancellation
+    try:
+        notifier = get_notification_service()
+        notifier.send_status_update({"id": booking.id, "customer_name": booking.customer_name}, "cancelled")
+    except Exception:
+        pass
+
+    return booking
 
 
 @router.get("/{booking_id}", response_model=BookingOut)

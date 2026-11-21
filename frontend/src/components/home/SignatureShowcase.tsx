@@ -179,7 +179,7 @@ export function SignatureShowcase() {
                 {/* Action buttons */}
                 <div className="pt-2 border-t border-[#F4EDE0] flex items-center justify-between">
                   <Link
-                    href={`/plan?template=${item.id}&occasion=${item.occasion}`}
+                    href={`/plan?template=${encodeURIComponent(item.id)}&occasion=${encodeURIComponent(item.occasion)}&img=${encodeURIComponent(item.imageUrl)}&title=${encodeURIComponent(item.title)}`}
                     className="text-xs font-semibold text-[#2F5D3A] hover:text-[#214229] flex items-center gap-1.5 transition-colors"
                   >
                     <span>{t.signatureSection.planOneLikeThis}</span>

@@ -422,7 +422,7 @@ export default function GalleryPage() {
                 {/* Primary Actions */}
                 <div className="space-y-3 pt-4 border-t border-[#F4EDE0]">
                   <PetalButton
-                    href={`/plan?template=${activeItem.id}&occasion=${activeItem.occasion}`}
+                    href={`/plan?template=${encodeURIComponent(activeItem.id)}&occasion=${encodeURIComponent(activeItem.occasion)}&img=${encodeURIComponent(activeItem.imageUrl)}&title=${encodeURIComponent(activeItem.title)}`}
                     size="md"
                     variant="primary"
                     className="w-full"

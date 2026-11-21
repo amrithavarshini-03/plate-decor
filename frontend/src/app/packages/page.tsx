@@ -30,7 +30,7 @@ export default function PackagesPage() {
       tamilName: "சுப தட்டுத் தொகுப்பு",
       tagline: "Essential auspicious plates for intimate home poojas and family milestones.",
       plateCount: 5,
-      startingPrice: "₹6,500",
+      startingPrice: "Formal Quote on Request",
       image: "/images/decor/sacred_kalasam_ganesha_mandala.jpg",
       features: [
         "Set of 5 arranged decorative brass thaalams",
@@ -46,7 +46,7 @@ export default function PackagesPage() {
       tamilName: "மண்டப சீர்வரிசைத் தொகுப்பு",
       tagline: "Our most requested collection for Puberty and Wedding ceremonies.",
       plateCount: 11,
-      startingPrice: "₹14,500",
+      startingPrice: "Formal Quote on Request",
       image: "/images/decor/sevvazhai_golden_lotus.jpg",
       popular: true,
       badge: "Most Celebrated",
@@ -65,7 +65,7 @@ export default function PackagesPage() {
       tamilName: "ராஜகம்பீர சீர்வரிசைத் தொகுப்பு",
       tagline: "The pinnacle of ceremonial plating, including stage backdrop and heirloom craftsmanship.",
       plateCount: 21,
-      startingPrice: "₹32,000",
+      startingPrice: "Formal Quote on Request",
       image: "/images/decor/valaikappu_full_stage_backdrop.jpg",
       features: [
         "Set of 21 opulent seer varisai plates",
@@ -129,10 +129,13 @@ export default function PackagesPage() {
                 <p className="text-xs text-[#635166]">{tier.tagline}</p>
               </div>
 
-              <div className="text-center py-2 border-y border-[#F4EDE0]">
-                <span className="text-[11px] text-[#635166] block">Starts from</span>
-                <span className="font-serif text-3xl font-bold text-[#2F5D3A]">
+              <div className="text-center py-2.5 border-y border-[#F4EDE0] space-y-0.5">
+                <span className="text-[11px] text-[#635166] block">Pricing Structure</span>
+                <span className="font-serif text-xl sm:text-2xl font-bold text-[#2F5D3A] block">
                   {tier.startingPrice}
+                </span>
+                <span className="text-[10px] text-[#8B5E14] block">
+                  50% Advance to Reserve · 50% on Event Day
                 </span>
               </div>
 

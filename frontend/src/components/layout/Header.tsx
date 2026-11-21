@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Sparkles, User, LogOut } from "lucide-react";
+import { Menu, X, Sparkles, User, LogOut, ShoppingBag } from "lucide-react";
 import { SITE_CONFIG } from "@/config/site.config";
 import { useLanguage } from "@/context/LanguageContext";
 import { PetalButton } from "@/components/primitives/PetalButton";
@@ -37,6 +37,7 @@ export function Header() {
     { href: "/", label: t.nav.home },
     { href: "/gallery", label: t.nav.gallery },
     { href: "/plan", label: t.nav.planner },
+    { href: "/my-orders", label: "My Orders" },
     { href: "/shop", label: t.nav.shop },
     { href: "/packages", label: t.nav.packages },
     { href: "/about", label: t.nav.about },
@@ -143,17 +144,33 @@ export function Header() {
             </span>
           </button>
 
+          {/* My Orders Button */}
+          <Link
+            href="/my-orders"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all duration-200 shadow-2xs ${
+              pathname === "/my-orders"
+                ? "bg-[#2F5D3A] text-white border-[#2F5D3A]"
+                : "bg-[#FFFDF9] border-[#E8DAC8] text-[#2B1A2E] hover:border-[#2F5D3A] hover:bg-[#FAF3E7]"
+            }`}
+            title="View My Ceremonial Orders & Quotes"
+          >
+            <ShoppingBag className="w-3.5 h-3.5 text-[#E9A62B]" />
+            <span>My Orders</span>
+          </Link>
+
           {/* Customer Auth Button */}
           {customer ? (
             <div className="flex items-center gap-1.5 bg-[#FAF3E7] border border-[#E8DAC8] rounded-full px-3 py-1 text-xs">
-              <User className="w-3.5 h-3.5 text-[#2F5D3A]" />
-              <span className="font-semibold text-[#2B1A2E] max-w-[100px] truncate">
-                {customer.full_name || customer.username}
-              </span>
+              <Link href="/my-orders" className="flex items-center gap-1.5 hover:underline" title="View Profile & Orders">
+                <User className="w-3.5 h-3.5 text-[#2F5D3A]" />
+                <span className="font-semibold text-[#2B1A2E] max-w-[100px] truncate">
+                  {customer.full_name || customer.username}
+                </span>
+              </Link>
               <button
                 onClick={handleCustomerLogout}
                 title="Sign Out"
-                className="ml-1 text-[#A8232F] hover:text-red-700 p-0.5"
+                className="ml-1 text-[#A8232F] hover:text-red-700 p-0.5 cursor-pointer"
               >
                 <LogOut className="w-3 h-3" />
               </button>
@@ -222,6 +239,21 @@ export function Header() {
               <Sparkles className="w-3.5 h-3.5 text-[#E9A62B]" />
               <span>{language === "ta" ? "மங்கலத் தட்டு திறப்பு காண" : "Replay Ceremonial Intro"}</span>
             </button>
+
+            {/* My Orders in Mobile Menu */}
+            <Link
+              href="/my-orders"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center justify-between p-3 rounded-2xl bg-[#FFFDF9] border border-[#E4C580] text-xs font-bold text-[#2B1A2E] shadow-2xs"
+            >
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4 text-[#2F5D3A]" />
+                <span>My Orders & Quotations</span>
+              </div>
+              <span className="text-[10px] uppercase font-semibold text-[#8B5E14] bg-[#FAF3E7] px-2 py-0.5 rounded-full border border-[#E8DAC8]">
+                View
+              </span>
+            </Link>
 
             {/* Customer Login in Mobile Menu */}
             {customer ? (
