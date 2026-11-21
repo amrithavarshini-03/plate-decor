@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { Menu, X, Sparkles, User, LogOut, ShoppingBag } from "lucide-react";
 import { SITE_CONFIG } from "@/config/site.config";
 import { useLanguage } from "@/context/LanguageContext";
-import { PetalButton } from "@/components/primitives/PetalButton";
 import { triggerGrandPetalShower } from "@/components/primitives/PetalBurst";
 import { getCustomerUser, removeCustomerToken, CustomerUser } from "@/services/api";
 
@@ -183,11 +182,6 @@ export function Header() {
               <span>Sign In</span>
             </Link>
           )}
-
-          {/* Primary CTA */}
-          <PetalButton href="/plan" size="sm" variant="primary" icon={<Sparkles className="w-3.5 h-3.5" />}>
-            {t.nav.beginPlate}
-          </PetalButton>
         </div>
 
         {/* Mobile Menu Button */}
@@ -284,18 +278,6 @@ export function Header() {
                 <span>Customer Sign In / Create Account</span>
               </Link>
             )}
-
-            <div className="pt-2">
-              <PetalButton
-                href="/plan"
-                size="md"
-                variant="primary"
-                className="w-full"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {t.nav.beginPlate}
-              </PetalButton>
-            </div>
           </div>
         </div>
       )}
