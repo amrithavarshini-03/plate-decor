@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+from typing import Optional
 import random
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -41,6 +42,17 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
     if len(digits) >= 10:
         last_10 = digits[-10:]
         user = db.query(User).filter(User.phone.like(f"%{last_10}%")).first()
+        if not user:
+            user = (
+                db.query(User)
+                .filter(
+                    (User.email.ilike(f"user_{last_10}@brbdecors.com"))
+                    | (User.email.ilike(f"user_{digits}@brbdecors.com"))
+                    | (User.username.ilike(f"user_{last_10}"))
+                    | (User.username.ilike(f"user_{digits}"))
+                )
+                .first()
+            )
     if not user:
         user = (
             db.query(User)
@@ -143,7 +155,9 @@ def find_user_by_identifier(ident: str, db: Session) -> Optional[User]:
     if not clean:
         return None
     if "@" in clean:
-        return db.query(User).filter(User.email.ilike(clean.lower())).first()
+        user = db.query(User).filter(User.email.ilike(clean.lower())).first()
+        if user:
+            return user
 
     # Digits for phone number check
     digits = "".join(c for c in clean if c.isdigit())
@@ -152,9 +166,29 @@ def find_user_by_identifier(ident: str, db: Session) -> Optional[User]:
         user = db.query(User).filter(User.phone.like(f"%{last_10}%")).first()
         if user:
             return user
+        user = (
+            db.query(User)
+            .filter(
+                (User.email.ilike(f"user_{last_10}@brbdecors.com"))
+                | (User.email.ilike(f"user_{digits}@brbdecors.com"))
+                | (User.username.ilike(f"user_{last_10}"))
+                | (User.username.ilike(f"user_{digits}"))
+            )
+            .first()
+        )
+        if user:
+            return user
 
-    # Fallback to username
-    return db.query(User).filter(User.username.ilike(clean)).first()
+    # Fallback to username, phone, or email
+    return (
+        db.query(User)
+        .filter(
+            (User.username.ilike(clean))
+            | (User.phone.ilike(clean))
+            | (User.email.ilike(clean))
+        )
+        .first()
+    )
 
 
 @router.post("/forgot-password")
